@@ -4,6 +4,8 @@ import type {
     Article,
     ArticleQuery,
     ArticleInput,
+    ArticleListVO,
+    ArticleDetailVO,
     LoginRequest,
     LoginResponse,
     User,
@@ -92,59 +94,97 @@ export async function getCurrentUser(): Promise<User> {
 
 // ==================== 文章 API ====================
 
-export async function getArticles(query: ArticleQuery = {}): Promise<PageResult<Article>> {
+export async function getArticles(query: ArticleQuery = {}): Promise<PageResult<ArticleListVO>> {
     const params = new URLSearchParams()
     if (query.current) params.append('current', String(query.current))
     if (query.size) params.append('size', String(query.size))
     if (query.keyword) params.append('keyword', query.keyword)
-    if (query.status) params.append('status', query.status)
+    if (query.status !== undefined) params.append('status', String(query.status))
     if (query.categoryId) params.append('categoryId', String(query.categoryId))
-    if (query.tag) params.append('tag', query.tag)
+    if (query.tagId) params.append('tagId', String(query.tagId))
+    if (query.authorId) params.append('authorId', String(query.authorId))
 
     const queryString = params.toString()
-    return fetchWithAuth<PageResult<Article>>(`/api/v1/admin/articles${queryString ? `?${queryString}` : ''}`)
+    // 使用管理端接口（支持查询所有状态）
+    return fetchWithAuth<PageResult<any>>(
+        `/api/v1/admin/articles${queryString ? `?${queryString}` : ''}`
+    ).then(pageResult => {
+        if (!pageResult) {
+            return {
+                records: [],
+                total: 0,
+                size: query.size || 10,
+                current: query.current || 1,
+                pages: 0
+            }
+        }
+
+        // 转换后端数据格式
+        return {
+            records: (pageResult.records || []).map((item: any) => ({
+                ...item,
+                // ID保持为字符串，避免精度丢失（Long类型超过JavaScript安全整数范围）
+                id: item.id,  // 不转换为number！
+                // status 后端已经返回，保持不变
+                status: item.status || (item.publishTime ? 'PUBLISHED' : 'DRAFT'),
+                // 添加缺失的 createdAt
+                createdAt: item.createdAt || item.publishTime || item.updateTime,
+                viewCount: item.viewCount || 0,
+                commentCount: item.commentCount || 0,
+            })),
+            // 转换字符串为数字（分页参数）
+            total: typeof pageResult.total === 'string' ? parseInt(pageResult.total) : pageResult.total,
+            size: typeof pageResult.size === 'string' ? parseInt(pageResult.size) : pageResult.size,
+            current: typeof pageResult.current === 'string' ? parseInt(pageResult.current) : pageResult.current,
+            pages: typeof pageResult.pages === 'string' ? parseInt(pageResult.pages) : pageResult.pages,
+        }
+    })
 }
 
-export async function getArticleById(id: number): Promise<Article> {
-    return fetchWithAuth<Article>(`/api/v1/admin/articles/${id}`)
+export async function getArticleById(id: string): Promise<ArticleDetailVO> {
+    // fetchWithAuth 已经返回了 json.data，不需要再次取 .data
+    return fetchWithAuth<ArticleDetailVO>(
+        `/api/v1/admin/articles/${id}`
+    )
 }
 
-export async function createArticle(data: Partial<Article>): Promise<number> {
-    return fetchWithAuth<number>('/api/v1/admin/articles', {
+export async function createArticle(data: ArticleInput): Promise<string> {
+    return fetchWithAuth<ApiResponse<string>>('/api/v1/admin/articles', {
         method: 'POST',
         body: JSON.stringify(data),
-    })
+    }).then(res => res.data)
 }
 
-export async function updateArticle(id: number, data: Partial<Article>): Promise<void> {
-    return fetchWithAuth<void>(`/api/v1/admin/articles/${id}`, {
+export async function updateArticle(id: string, data: ArticleInput): Promise<void> {
+    const payload = { ...data, id }
+    return fetchWithAuth<ApiResponse<void>>(`/api/v1/admin/articles/${id}`, {
         method: 'PUT',
-        body: JSON.stringify({ ...data, id }),
-    })
+        body: JSON.stringify(payload),
+    }).then(() => undefined)
 }
 
-export async function deleteArticle(id: number): Promise<void> {
-    return fetchWithAuth<void>(`/api/v1/admin/articles/${id}`, {
+export async function deleteArticle(id: string): Promise<void> {
+    return fetchWithAuth<ApiResponse<void>>(`/api/v1/admin/articles/${id}`, {
         method: 'DELETE',
-    })
+    }).then(() => undefined)
 }
 
-export async function publishArticle(id: number): Promise<void> {
-    return fetchWithAuth<void>(`/api/v1/admin/articles/${id}/publish`, {
+export async function publishArticle(id: string): Promise<void> {
+    return fetchWithAuth<ApiResponse<void>>(`/api/v1/admin/articles/${id}/publish`, {
         method: 'POST',
-    })
+    }).then(() => undefined)
 }
 
-export async function archiveArticle(id: number): Promise<void> {
-    return fetchWithAuth<void>(`/api/v1/admin/articles/${id}/archive`, {
+export async function archiveArticle(id: string): Promise<void> {
+    return fetchWithAuth<ApiResponse<void>>(`/api/v1/admin/articles/${id}/archive`, {
         method: 'POST',
-    })
+    }).then(() => undefined)
 }
 
-export async function unarchiveArticle(id: number): Promise<void> {
-    return fetchWithAuth<void>(`/api/v1/admin/articles/${id}/unarchive`, {
+export async function unarchiveArticle(id: string): Promise<void> {
+    return fetchWithAuth<ApiResponse<void>>(`/api/v1/admin/articles/${id}/unarchive`, {
         method: 'POST',
-    })
+    }).then(() => undefined)
 }
 
 // ==================== 评论 API ====================

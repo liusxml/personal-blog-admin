@@ -18,7 +18,7 @@ export interface ApiResponse<T> {
 
 // 用户相关
 export interface User {
-    id: number
+    id: string  // Long类型，使用string避免精度丢失
     username: string
     nickname: string
     email: string
@@ -41,18 +41,18 @@ export interface LoginResponse {
 
 // 文章相关
 export interface Article {
-    id: number
+    id: string  // Long类型，使用string避免精度丢失
     title: string
     summary?: string
     content?: string
     contentHtml?: string
     coverImage?: string
     status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
-    authorId: number
+    authorId: string  // Long类型
     authorName?: string
     viewCount: number
     commentCount: number
-    categoryId?: number
+    categoryId?: string  // Long类型
     categoryName?: string
     tags?: string[]
     publishTime?: string
@@ -60,23 +60,83 @@ export interface Article {
     updatedAt: string
 }
 
-export interface ArticleQuery {
-    current?: number
-    size?: number
-    keyword?: string
-    status?: string
-    categoryId?: number
-    tag?: string
+// 文章列表 VO
+export interface ArticleListVO {
+    id: string  // Long类型，使用string避免精度丢失
+    title: string
+    summary?: string
+    coverImage?: string
+    status: ArticleStatus
+    authorId: string  // Long类型
+    authorName?: string
+    viewCount: number
+    commentCount: number
+    categoryId?: string  // Long类型
+    categoryName?: string
+    tags?: string[]
+    publishTime?: string
+    createdAt: string
+    updatedAt: string
 }
 
-export interface ArticleInput {
+// 文章详情 VO
+export interface ArticleDetailVO {
+    id: string  // Long类型，使用string避免精度丢失
     title: string
     summary?: string
     content: string
     coverImage?: string
-    status: 'DRAFT' | 'PUBLISHED'
-    categoryId?: number
+    status: ArticleStatus
+    authorId: string  // Long类型
+    authorName?: string
+    authorAvatar?: string
+    viewCount: number
+    commentCount: number
+    categoryId?: string  // Long类型
+    categoryName?: string
     tags?: string[]
+    type?: ArticleType
+    originalUrl?: string
+    isTop?: 0 | 1
+    isFeatured?: 0 | 1
+    isCommentDisabled?: 0 | 1
+    publishTime?: string
+    createdAt: string
+    updatedAt: string
+}
+
+// 文章状态
+export type ArticleStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
+
+// 文章类型
+export type ArticleType = 1 | 2 | 3  // 1-原创, 2-转载, 3-翻译
+
+// 文章查询参数
+export interface ArticleQuery {
+    current?: number
+    size?: number
+    keyword?: string
+    status?: 0 | 2 | 3  // 0-草稿(DRAFT), 2-已发布(PUBLISHED), 3-已归档(ARCHIVED)
+    categoryId?: number
+    tagId?: number
+    authorId?: number
+}
+
+// 文章创建/更新 DTO
+export interface ArticleInput {
+    id?: number  // 更新时必填
+    title: string
+    summary?: string
+    content: string
+    coverImageId?: number
+    categoryId?: number
+    tagIds?: number[]
+    type?: ArticleType
+    originalUrl?: string
+    isTop?: 0 | 1
+    isFeatured?: 0 | 1
+    isCommentDisabled?: 0 | 1
+    password?: string
 }
 
 // 评论相关
@@ -158,9 +218,6 @@ export interface Tag {
     slug: string
     articleCount?: number
 }
-
-// 文章状态类型别名
-export type ArticleStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
 
 // 评论输入
 export interface CommentInput {

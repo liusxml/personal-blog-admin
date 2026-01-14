@@ -20,7 +20,7 @@ import { Separator } from '@/components/ui/separator'
 
 const menuItems = [
     { title: '仪表盘', href: '/dashboard', icon: '📊' },
-    { title: '文章管理', href: '/dashboard/articles', icon: '📝' },
+    { title: '文章管理', href: '/articles', icon: '📝' },
     { title: '评论管理', href: '/dashboard/comments', icon: '💬' },
     { title: '文件管理', href: '/dashboard/files', icon: '📁' },
 ]
