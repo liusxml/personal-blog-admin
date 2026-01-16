@@ -139,36 +139,86 @@ export interface ArticleInput {
     password?: string
 }
 
-// 评论相关
+// ==================== 评论相关 ====================
+
+// 评论状态
 export type CommentStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'DELETED'
 
-export interface Comment {
-    id: number
+// 评论目标类型
+export type CommentTargetType = 'ARTICLE' | 'PAGE'
+
+// 评论基础 VO
+export interface CommentVO {
+    id: string  // Long类型，使用string避免精度丢失
+    targetType: CommentTargetType
+    targetId: string  // Long类型
+    parentId?: string  // Long类型
     content: string
-    targetType: 'ARTICLE' | 'PAGE'
-    targetId: number
-    parentId?: number
-    authorId: number
-    authorName: string
-    authorAvatar?: string
     status: CommentStatus
     likeCount: number
+    replyCount: number
+    createBy: string  // Long类型
+    createTime: string
+    updateTime: string
+}
+
+// 评论树形结构 VO
+export interface CommentTreeVO {
+    id: string  // Long类型，使用string避免精度丢失
+    targetType: CommentTargetType
+    targetId: string  // Long类型
+    parentId?: string  // Long类型
+    rootId?: string  // Long类型
+    content: string
+    status: CommentStatus
+    likeCount: number
+    replyCount: number
+    createBy: string  // Long类型
+    createTime: string
+    updateTime: string
+    // 树形结构字段
+    path?: string  // 物化路径
+    depth: number  // 深度 (0=根评论)
+    children: CommentTreeVO[]  // 子评论列表
+}
+
+// 评论查询参数
+export interface CommentQuery {
+    current?: number
+    size?: number
+    keyword?: string
+    status?: CommentStatus
+    targetType?: CommentTargetType
+    targetId?: string
+}
+
+// 评论审核输入
+export interface CommentAuditInput {
+    reason?: string  // 拒绝原因或管理员备注
+}
+
+// 评论举报 VO
+export interface CommentReportVO {
+    id: string  // Long类型
+    commentId: string  // Long类型
+    comment?: CommentVO  // 被举报的评论信息
+    reporterId: string  // Long类型
+    reporterName?: string
+    reason: string
+    status: 'PENDING' | 'APPROVED' | 'REJECTED'
+    adminRemark?: string
     createdAt: string
     updatedAt: string
 }
 
-// 评论树节点
-export interface CommentTreeVO {
-    id: number
+// 评论创建输入
+export interface CommentInput {
+    targetType: CommentTargetType
+    targetId: string
     content: string
-    authorId: number
-    authorName: string
-    authorAvatar?: string
-    likeCount: number
-    status: CommentStatus
-    createdAt: string
-    children: CommentTreeVO[]
+    parentId?: string  // 回复评论时填写
 }
+
 
 // 文件相关
 export interface FileInfo {
@@ -219,24 +269,7 @@ export interface Tag {
     articleCount?: number
 }
 
-// 评论输入
-export interface CommentInput {
-    targetType: 'ARTICLE' | 'PAGE'
-    targetId: number
-    content: string
-    parentId?: number
-}
-
-// 评论举报
-export interface CommentReport {
-    id: number
-    commentId: number
-    reporterId: number
-    reporterName: string
-    reason: string
-    status: 'PENDING' | 'APPROVED' | 'REJECTED'
-    createdAt: string
-}
+// ==================== 文件相关 ====================
 
 // 举报操作请求
 export interface ReportActionRequest {

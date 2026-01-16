@@ -10,9 +10,11 @@ import type {
     LoginResponse,
     User,
     CommentTreeVO,
-    Comment,
+    CommentVO,
     CommentInput,
-    CommentReport,
+    CommentReportVO,
+    CommentQuery,
+    CommentAuditInput,
     ReportActionRequest,
     PreSignedUploadVO,
     FileVO,
@@ -189,35 +191,91 @@ export async function unarchiveArticle(id: string): Promise<void> {
 
 // ==================== 评论 API ====================
 
-export async function getCommentTree(targetType: string, targetId: number): Promise<CommentTreeVO[]> {
+// 获取评论树（按目标查询）
+export async function getCommentTree(
+    targetType: string,
+    targetId: string
+): Promise<CommentTreeVO[]> {
     return fetchWithAuth<CommentTreeVO[]>(
         `/api/v1/comments/tree?targetType=${targetType}&targetId=${targetId}`
     )
 }
 
-export async function deleteComment(id: number): Promise<void> {
-    return fetchWithAuth<void>(`/api/v1/comments/${id}`, {
-        method: 'DELETE',
+//审核通过评论（管理员）
+export async function approveComment(id: string): Promise<void> {
+    return fetchWithAuth<void>(`/api/v1/comments/audit/${id}/approve`, {
+        method: 'POST',
     })
 }
 
-export async function getReports(status?: string): Promise<PageResult<CommentReport>> {
-    const queryString = status ? `?status=${status}` : ''
-    return fetchWithAuth<PageResult<CommentReport>>(`/api/v1/comments/reports${queryString}`)
+// 审核拒绝评论（管理员）
+export async function rejectComment(
+    id: string,
+    reason: string
+): Promise<void> {
+    return fetchWithAuth<void>(`/api/v1/comments/audit/${id}/reject`, {
+        method: 'POST',
+        body: JSON.stringify({ reason }),
+    })
 }
 
-export async function approveReport(reportId: number, data?: ReportActionRequest): Promise<void> {
+// 管理员删除评论
+export async function deleteCommentByAdmin(
+    id: string,
+    reason: string
+): Promise<void> {
+    return fetchWithAuth<void>(`/api/v1/comments/audit/${id}`, {
+        method: 'DELETE',
+        body: JSON.stringify({ reason }),
+    })
+}
+
+// 获取举报列表
+export async function getCommentReports(
+    status?: string
+): Promise<CommentReportVO[]> {
+    const queryString = status ? `?status=${status}` : ''
+    return fetchWithAuth<CommentReportVO[]>(`/api/v1/comments/reports${queryString}`)
+}
+
+// 审核通过举报
+export async function approveReport(
+    reportId: string,
+    remark?: string
+): Promise<void> {
     return fetchWithAuth<void>(`/api/v1/comments/reports/${reportId}/approve`, {
         method: 'POST',
-        body: data ? JSON.stringify(data) : undefined,
+        body: JSON.stringify({ remark: remark || '' }),
     })
 }
 
-export async function rejectReport(reportId: number, data?: ReportActionRequest): Promise<void> {
+// 审核拒绝举报
+export async function rejectReport(
+    reportId: string,
+    remark?: string
+): Promise<void> {
     return fetchWithAuth<void>(`/api/v1/comments/reports/${reportId}/reject`, {
         method: 'POST',
-        body: data ? JSON.stringify(data) : undefined,
+        body: JSON.stringify({ remark: remark || '' }),
     })
+}
+
+// 获取评论列表（管理端分页）
+export async function getComments(params: {
+    pageNum?: number
+    pageSize?: number
+    status?: string
+    targetType?: string
+}): Promise<PageResult<CommentVO>> {
+    const queryParams = new URLSearchParams()
+    if (params.pageNum) queryParams.append('pageNum', params.pageNum.toString())
+    if (params.pageSize) queryParams.append('pageSize', params.pageSize.toString())
+    if (params.status) queryParams.append('status', params.status)
+    if (params.targetType) queryParams.append('targetType', params.targetType)
+
+    return fetchWithAuth<PageResult<CommentVO>>(
+        `/api/v1/admin/comments?${queryParams.toString()}`
+    )
 }
 
 // ==================== 文件 API ====================
