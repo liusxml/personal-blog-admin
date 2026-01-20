@@ -17,9 +17,7 @@ import type {
     CommentAuditInput,
     ReportActionRequest,
     PreSignedUploadVO,
-    FileVO,
-    FileUploadRequest,
-    FileAccessUrlVO
+    FileVO
 } from '@/types'
 import Cookies from 'js-cookie'
 
@@ -278,41 +276,73 @@ export async function getComments(params: {
     )
 }
 
+
 // ==================== 文件 API ====================
 
-export async function generateUploadUrl(fileName: string, mimeType: string): Promise<PreSignedUploadVO> {
-    const data: FileUploadRequest = { fileName, mimeType }
+// 分页查询文件列表
+export async function getFiles(params: {
+    pageNum?: number
+    pageSize?: number
+    fileCategory?: string
+    storageType?: string
+}): Promise<PageResult<FileVO>> {
+    const queryParams = new URLSearchParams()
+    if (params.pageNum) queryParams.append('pageNum', params.pageNum.toString())
+    if (params.pageSize) queryParams.append('pageSize', params.pageSize.toString())
+    if (params.fileCategory) queryParams.append('fileCategory', params.fileCategory)
+    if (params.storageType) queryParams.append('storageType', params.storageType)
+
+    return fetchWithAuth<PageResult<FileVO>>(
+        `/api/v1/files?${queryParams.toString()}`
+    )
+}
+
+// 生成预签名上传URL
+export async function generateUploadUrl(request: {
+    fileName: string
+    fileSize: number
+    contentType: string
+    md5?: string
+}): Promise<PreSignedUploadVO> {
     return fetchWithAuth<PreSignedUploadVO>('/api/v1/files/presigned', {
         method: 'POST',
-        body: JSON.stringify(data),
+        body: JSON.stringify(request),
     })
 }
 
-export async function confirmUpload(fileId: number): Promise<void> {
+// 直接上传到S4存储
+export async function uploadToS4(uploadUrl: string, file: File): Promise<void> {
+    const res = await fetch(uploadUrl, {
+        method: 'PUT',
+        body: file,
+        headers: {
+            'Content-Type': file.type,
+        },
+    })
+
+    if (!res.ok) {
+        throw new Error(`上传失败: ${res.statusText}`)
+    }
+}
+
+// 确认上传完成
+export async function confirmUpload(fileId: string): Promise<void> {
     return fetchWithAuth<void>(`/api/v1/files/${fileId}/confirm`, {
         method: 'PATCH',
     })
 }
 
-export async function getFileAccessUrl(id: number, expireMinutes?: number): Promise<string> {
+// 获取文件访问URL
+export async function getFileAccessUrl(id: string, expireMinutes?: number): Promise<string> {
     const queryString = expireMinutes ? `?expireMinutes=${expireMinutes}` : ''
-    const data = await fetchWithAuth<FileAccessUrlVO>(`/api/v1/files/${id}/access-url${queryString}`)
-    return data.accessUrl
+    return fetchWithAuth<string>(`/api/v1/files/${id}/access-url${queryString}`)
 }
 
-export async function deleteFile(id: number): Promise<void> {
+// 删除文件
+export async function deleteFile(id: string): Promise<void> {
     return fetchWithAuth<void>(`/api/v1/files/${id}`, {
         method: 'DELETE',
     })
-}
-
-export async function getFiles(query?: { current?: number; size?: number }): Promise<PageResult<FileVO>> {
-    const params = new URLSearchParams()
-    if (query?.current) params.append('current', String(query.current))
-    if (query?.size) params.append('size', String(query.size))
-
-    const queryString = params.toString()
-    return fetchWithAuth<PageResult<FileVO>>(`/api/v1/files${queryString ? `?${queryString}` : ''}`)
 }
 
 // ==================== Actuator Metrics ====================

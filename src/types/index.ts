@@ -219,38 +219,6 @@ export interface CommentInput {
     parentId?: string  // 回复评论时填写
 }
 
-
-// 文件相关
-export interface FileInfo {
-    id: number
-    filename: string
-    originalName: string
-    url: string
-    size: number
-    mimeType: string
-    createdAt: string
-}
-
-// 预签名上传响应
-export interface PreSignedUploadVO {
-    fileId: number
-    uploadUrl: string
-    objectKey: string
-    expireAt: string
-}
-
-// 文件 VO（更新）
-export interface FileVO {
-    id: number
-    fileName: string
-    originalName: string
-    objectKey: string
-    fileSize: number
-    mimeType: string
-    status: 'PENDING' | 'COMPLETED'
-    createdAt: string
-}
-
 // 分类相关
 export interface Category {
     id: number
@@ -271,19 +239,58 @@ export interface Tag {
 
 // ==================== 文件相关 ====================
 
+// 文件 VO (从后端映射)
+export interface FileVO {
+    id: string                    // Long -> String
+    fileKey: string               // 存储键
+    storageType: string           // 存储类型 (BITIFUL)
+    bucket?: string               // Bucket名称
+    originalName: string          // 原始文件名
+    fileSize: number              // 文件大小（字节）
+    contentType: string           // MIME类型
+    extension: string             // 扩展名
+    fileCategory: string          // 文件分类 (IMAGE/VIDEO/DOCUMENT/OTHER)
+    imageWidth?: number           // 图片宽度
+    imageHeight?: number          // 图片高度
+    refType?: string              // 引用类型
+    refId?: string                // 引用对象ID (Long -> String)
+    cdnUrl?: string               // CDN URL
+    accessPolicy: string          // 访问策略
+    uploadStatus: number          // 0=待上传,1=已完成,2=失败
+    downloadCount: number         // 下载次数
+    viewCount: number             // 查看次数
+    createTime: string            // 创建时间
+    createBy: string              // 创建人ID (Long -> String)
+}
+
+// 预签名上传请求
+export interface PreSignedUrlRequest {
+    fileName: string
+    fileSize: number
+    contentType: string
+    md5?: string
+    expireMinutes?: number
+}
+
+// 预签名上传响应
+export interface PreSignedUploadVO {
+    uploadUrl: string             // 预签名PUT URL
+    fileKey: string               // 存储键
+    fileId: string                // 文件ID (Long -> String)
+    expireSeconds: number         // 有效期（秒）
+    callbackUrl: string           // 回调URL
+    instant?: boolean             // 是否秒传
+}
+
+// 文件查询参数
+export interface FileQuery {
+    pageNum: number
+    pageSize: number
+    fileCategory?: string
+    storageType?: string
+}
+
 // 举报操作请求
 export interface ReportActionRequest {
     remark?: string
-}
-
-// 文件上传请求
-export interface FileUploadRequest {
-    fileName: string
-    mimeType: string
-}
-
-// 访问 URL 响应
-export interface FileAccessUrlVO {
-    accessUrl: string
-    expireAt: string
 }
