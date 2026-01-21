@@ -294,3 +294,59 @@ export interface FileQuery {
 export interface ReportActionRequest {
     remark?: string
 }
+
+// ==================== 分类相关 ====================
+
+export interface CategoryVO {
+    id: string  // Long类型
+    name: string
+    slug: string
+    description?: string
+    parentId?: string  // Long类型
+    sortOrder: number
+    articleCount: number
+    createdAt: string
+    updatedAt: string
+}
+
+export interface CategoryTreeVO extends CategoryVO {
+    children?: CategoryTreeVO[]
+    level?: number
+}
+
+export interface CategoryInput {
+    id?: string
+    name: string
+    slug: string
+    description?: string
+    parentId?: string
+    sortOrder?: number
+}
+
+// ==================== 标签相关 ====================
+
+export interface TagVO {
+    id: string  // Long类型
+    name: string
+    slug: string
+    description?: string
+    color?: string
+    articleCount: number
+    createdAt: string
+    updatedAt: string
+}
+
+export interface TagInput {
+    id?: string
+    name: string
+    slug: string
+    description?: string
+    color?: string
+}
+
+export interface TagQuery {
+    current?: number
+    size?: number
+    name?: string
+}
+

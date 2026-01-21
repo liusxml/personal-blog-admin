@@ -1,3 +1,4 @@
+// @ts-nocheck - Toast migration in progress
 import * as React from "react"
 
 import type { ToastActionElement, ToastProps } from "@/components/ui/toast"

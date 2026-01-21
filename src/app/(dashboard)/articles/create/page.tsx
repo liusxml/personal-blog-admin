@@ -28,7 +28,7 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 import { ArrowLeft, Save, Send } from 'lucide-react'
 import Link from 'next/link'
 
@@ -40,7 +40,7 @@ const MDEditor = dynamic(
 
 export default function CreateArticlePage() {
     const router = useRouter()
-    const { toast } = useToast()
+
     const [content, setContent] = useState('')
 
     const form = useForm<ArticleFormData>({
@@ -60,18 +60,11 @@ export default function CreateArticlePage() {
     const createMutation = useMutation({
         mutationFn: createArticle,
         onSuccess: (id) => {
-            toast({
-                title: '创建成功',
-                description: '文章已保存为草稿',
-            })
+            toast.success('文章已保存为草稿')
             router.push('/articles')
         },
         onError: (error: any) => {
-            toast({
-                title: '创建失败',
-                description: error.message || '请稍后重试',
-                variant: 'destructive',
-            })
+            toast.error(error.message || '创建失败，请稍后重试')
         },
     })
 
@@ -81,20 +74,12 @@ export default function CreateArticlePage() {
 
         // 手动验证
         if (!data.title || data.title.trim().length === 0) {
-            toast({
-                title: '验证失败',
-                description: '标题不能为空',
-                variant: 'destructive',
-            })
+            toast.error('标题不能为空')
             return
         }
 
         if (!content || content.length < 10) {
-            toast({
-                title: '验证失败',
-                description: '内容至少需要 10 个字符',
-                variant: 'destructive',
-            })
+            toast.error('内容至少需要 10 个字符')
             return
         }
 

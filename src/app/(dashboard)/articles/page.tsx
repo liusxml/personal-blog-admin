@@ -39,11 +39,11 @@ import {
 } from '@/components/ui/tooltip'
 import { ArticleQuery } from '@/types'
 import { PlusCircle, Edit, Trash2, Eye, Archive, ArchiveRestore, Send } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
+import { toast } from 'sonner'
 
 export default function ArticlesPage() {
     const router = useRouter()
-    const { toast } = useToast()
+
     const queryClient = useQueryClient()
 
     const [query, setQuery] = useState<ArticleQuery>({
@@ -52,7 +52,7 @@ export default function ArticlesPage() {
         // 不设置默认 status，让管理端接口返回所有状态的文章
     })
 
-    const [deleteId, setDeleteId] = useState<number | null>(null)
+    const [deleteId, setDeleteId] = useState<string | null>(null)
 
     // 获取文章列表
     const { data, isLoading } = useQuery({
@@ -65,17 +65,11 @@ export default function ArticlesPage() {
         mutationFn: deleteArticle,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['articles'] })
-            toast({
-                title: '删除成功',
-                description: '文章已删除',
-            })
+            toast.success('文章已删除')
             setDeleteId(null)
         },
         onError: () => {
-            toast({
-                title: '删除失败',
-                variant: 'destructive',
-            })
+            toast.error('删除失败')
         },
     })
 
@@ -84,10 +78,7 @@ export default function ArticlesPage() {
         mutationFn: publishArticle,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['articles'] })
-            toast({
-                title: '发布成功',
-                description: '文章已发布',
-            })
+            toast.success('文章已发布')
         },
     })
 
@@ -96,9 +87,7 @@ export default function ArticlesPage() {
         mutationFn: archiveArticle,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['articles'] })
-            toast({
-                title: '归档成功',
-            })
+            toast.success('归档成功')
         },
     })
 
@@ -107,9 +96,7 @@ export default function ArticlesPage() {
         mutationFn: unarchiveArticle,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['articles'] })
-            toast({
-                title: '已恢复',
-            })
+            toast.success('已恢复')
         },
     })
 

@@ -21,8 +21,10 @@ import { Separator } from '@/components/ui/separator'
 const menuItems = [
     { title: '仪表盘', href: '/dashboard', icon: '📊' },
     { title: '文章管理', href: '/articles', icon: '📝' },
+    { title: '分类管理', href: '/categories', icon: '📁' },
+    { title: '标签管理', href: '/tags', icon: '🏷️' },
     { title: '评论管理', href: '/comments', icon: '💬' },
-    { title: '文件管理', href: '/files', icon: '📁' },
+    { title: '文件管理', href: '/files', icon: '📦' },
 ]
 
 function AppSidebar() {

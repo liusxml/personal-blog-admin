@@ -17,7 +17,13 @@ import type {
     CommentAuditInput,
     ReportActionRequest,
     PreSignedUploadVO,
-    FileVO
+    FileVO,
+    CategoryVO,
+    CategoryTreeVO,
+    CategoryInput,
+    TagVO,
+    TagInput,
+    TagQuery
 } from '@/types'
 import Cookies from 'js-cookie'
 
@@ -420,4 +426,98 @@ export async function getHealth(): Promise<any> {
     return fetchActuator<any>('/actuator/health')
 }
 
+// ==================== 分类 API ====================
 
+export async function getCategoryTree(): Promise<import('@/types').CategoryTreeVO[]> {
+    return fetchWithAuth<import('@/types').CategoryTreeVO[]>('/api/v1/admin/categories/tree')
+}
+
+export async function getCategoryById(id: string): Promise<import('@/types').CategoryVO> {
+    return fetchWithAuth<import('@/types').CategoryVO>(`/api/v1/admin/categories/${id}`)
+}
+
+export async function createCategory(data: import('@/types').CategoryInput): Promise<string> {
+    return fetchWithAuth<string>('/api/v1/admin/categories', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    })
+}
+
+export async function updateCategory(id: string, data: import('@/types').CategoryInput): Promise<void> {
+    return fetchWithAuth<void>(`/api/v1/admin/categories/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    })
+}
+
+export async function deleteCategory(id: string): Promise<void> {
+    return fetchWithAuth<void>(`/api/v1/admin/categories/${id}`, {
+        method: 'DELETE',
+    })
+}
+
+export async function moveCategory(
+    id: string,
+    newParentId?: string,
+    newSortOrder?: number
+): Promise<void> {
+    const params = new URLSearchParams()
+    if (newParentId) params.append('newParentId', newParentId)
+    if (newSortOrder !== undefined) params.append('newSortOrder', String(newSortOrder))
+
+    return fetchWithAuth<void>(
+        `/api/v1/admin/categories/${id}/move?${params.toString()}`,
+        { method: 'PUT' }
+    )
+}
+
+// ==================== 标签 API ====================
+
+export async function getTags(query: import('@/types').TagQuery = {}): Promise<PageResult<import('@/types').TagVO>> {
+    const params = new URLSearchParams()
+    if (query.current) params.append('current', String(query.current))
+    if (query.size) params.append('size', String(query.size))
+    if (query.name) params.append('name', query.name)
+
+    const queryString = params.toString()
+    return fetchWithAuth<PageResult<import('@/types').TagVO>>(
+        `/api/v1/admin/tags${queryString ? `?${queryString}` : ''}`
+    )
+}
+
+export async function getTagById(id: string): Promise<import('@/types').TagVO> {
+    return fetchWithAuth<import('@/types').TagVO>(`/api/v1/admin/tags/${id}`)
+}
+
+export async function createTag(data: import('@/types').TagInput): Promise<string> {
+    return fetchWithAuth<string>('/api/v1/admin/tags', {
+        method: 'POST',
+        body: JSON.stringify(data),
+    })
+}
+
+export async function batchCreateTags(names: string[]): Promise<string[]> {
+    return fetchWithAuth<string[]>('/api/v1/admin/tags/batch', {
+        method: 'POST',
+        body: JSON.stringify(names),
+    })
+}
+
+export async function updateTag(id: string, data: import('@/types').TagInput): Promise<void> {
+    return fetchWithAuth<void>(`/api/v1/admin/tags/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+    })
+}
+
+export async function deleteTag(id: string): Promise<void> {
+    return fetchWithAuth<void>(`/api/v1/admin/tags/${id}`, {
+        method: 'DELETE',
+    })
+}
+
+export async function mergeTags(sourceId: string, targetId: string): Promise<void> {
+    return fetchWithAuth<void>(`/api/v1/admin/tags/${sourceId}/merge?targetTagId=${targetId}`, {
+        method: 'POST',
+    })
+}
