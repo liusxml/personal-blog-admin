@@ -44,19 +44,17 @@ export default function EditArticlePage() {
     const params = useParams()
     const id = params.id as string  // 保持为字符串，避免Long类型精度丢失
 
-    const [content, setContent] = useState('')
-
     const form = useForm<ArticleFormData>({
-        // @ts-expect-error - Zod preprocess causes type inference issues with react-hook-form
-        resolver: zodResolver(ArticleSchema),
         defaultValues: {
             title: '',
             summary: '',
             content: '',
-            type: 1 as const,
-            isTop: 0 as const,
-            isFeatured: 0 as const,
-            isCommentDisabled: 0 as const,
+            categoryId: '',
+            tagIds: [],
+            type: 1,
+            isTop: 0,
+            isFeatured: 0,
+            isCommentDisabled: 0,
         },
     })
 
@@ -74,22 +72,20 @@ export default function EditArticlePage() {
                 title: article.title,
                 summary: article.summary || '',
                 content: article.content,
+                categoryId: article.categoryId || '',
+                tagIds: article.tagIds || [],
                 type: article.type || 1,
                 originalUrl: article.originalUrl || '',
                 isTop: article.isTop || 0,
                 isFeatured: article.isFeatured || 0,
                 isCommentDisabled: article.isCommentDisabled || 0,
             })
-            setContent(article.content)
         }
     }, [article, form])
 
     // 更新文章
     const updateMutation = useMutation({
-        mutationFn: (data: ArticleFormData) => updateArticle(id, {
-            ...data,
-            content,
-        }),
+        mutationFn: (data: ArticleFormData) => updateArticle(id, data),
         onSuccess: () => {
             toast.success('文章已更新')
             router.push('/articles')
@@ -109,13 +105,35 @@ export default function EditArticlePage() {
     })
 
     const onSubmit = (data: ArticleFormData) => {
+        // 手动验证
+        if (!data.title || data.title.trim().length === 0) {
+            toast.error('标题不能为空')
+            return
+        }
+
+        if (!data.content || data.content.length < 10) {
+            toast.error('内容至少需要 10 个字符')
+            return
+        }
+
         updateMutation.mutate(data)
     }
 
     const handlePublish = async () => {
         // 先保存，再发布
         const formData = form.getValues()
-        await updateMutation.mutateAsync({ ...formData, content })
+
+        // 验证
+        if (!formData.title || formData.title.trim().length === 0) {
+            toast.error('标题不能为空')
+            return
+        }
+        if (!formData.content || formData.content.length < 10) {
+            toast.error('内容至少需要 10 个字符')
+            return
+        }
+
+        await updateMutation.mutateAsync(formData)
         publishMutation.mutate()
     }
 
@@ -195,19 +213,26 @@ export default function EditArticlePage() {
                     />
 
                     {/* Markdown 编辑器 */}
-                    <FormItem>
-                        <FormLabel>内容 *</FormLabel>
-                        <FormControl>
-                            <div data-color-mode="light">
-                                <MDEditor
-                                    value={content}
-                                    onChange={(val) => setContent(val || '')}
-                                    height={500}
-                                    preview="edit"
-                                />
-                            </div>
-                        </FormControl>
-                    </FormItem>
+                    <FormField
+                        control={form.control}
+                        name="content"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>内容 *</FormLabel>
+                                <FormControl>
+                                    <div data-color-mode="light">
+                                        <MDEditor
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            height={500}
+                                            preview="edit"
+                                        />
+                                    </div>
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
                     {/* 文章类型 */}
                     <FormField

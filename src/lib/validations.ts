@@ -17,16 +17,13 @@ export const ArticleSchema = z.object({
 
     coverImageId: z.number().optional(),
 
-    categoryId: z.number().optional(),
+    categoryId: z.string().min(1, '请选择分类'),
 
-    tagIds: z.array(z.number())
+    tagIds: z.array(z.string())
         .max(5, '最多选择5个标签')
-        .optional(),
+        .default([]),
 
-    type: z.preprocess(
-        (val) => val ?? 1,
-        z.union([z.literal(1), z.literal(2), z.literal(3)])
-    ),
+    type: z.union([z.literal(1), z.literal(2), z.literal(3)]).default(1),
 
     originalUrl: z.string()
         .url('请输入有效的URL')
@@ -34,20 +31,11 @@ export const ArticleSchema = z.object({
         .optional()
         .or(z.literal('')),
 
-    isTop: z.preprocess(
-        (val) => val ?? 0,
-        z.union([z.literal(0), z.literal(1)])
-    ),
+    isTop: z.union([z.literal(0), z.literal(1)]).default(0),
 
-    isFeatured: z.preprocess(
-        (val) => val ?? 0,
-        z.union([z.literal(0), z.literal(1)])
-    ),
+    isFeatured: z.union([z.literal(0), z.literal(1)]).default(0),
 
-    isCommentDisabled: z.preprocess(
-        (val) => val ?? 0,
-        z.union([z.literal(0), z.literal(1)])
-    ),
+    isCommentDisabled: z.union([z.literal(0), z.literal(1)]).default(0),
 
     password: z.string()
         .max(100, '密码最多100字符')

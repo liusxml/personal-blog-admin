@@ -129,8 +129,8 @@ export interface ArticleInput {
     summary?: string
     content: string
     coverImageId?: number
-    categoryId?: number
-    tagIds?: number[]
+    categoryId?: string  // 改为 string
+    tagIds?: string[]    // 改为 string[]
     type?: ArticleType
     originalUrl?: string
     isTop?: 0 | 1

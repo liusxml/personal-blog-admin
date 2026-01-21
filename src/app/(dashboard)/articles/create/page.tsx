@@ -31,6 +31,8 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
 import { ArrowLeft, Save, Send } from 'lucide-react'
 import Link from 'next/link'
+import { CategorySelect } from '@/components/features/CategorySelect'
+import { TagMultiSelect } from '@/components/features/TagMultiSelect'
 
 // 动态导入 Markdown 编辑器（客户端only）
 const MDEditor = dynamic(
@@ -41,14 +43,13 @@ const MDEditor = dynamic(
 export default function CreateArticlePage() {
     const router = useRouter()
 
-    const [content, setContent] = useState('')
-
     const form = useForm<ArticleFormData>({
-        // 移除 zodResolver - 改为手动验证
         defaultValues: {
             title: '',
             summary: '',
             content: '',
+            categoryId: '',
+            tagIds: [],
             type: 1,
             isTop: 0,
             isFeatured: 0,
@@ -69,26 +70,23 @@ export default function CreateArticlePage() {
     })
 
     const onSubmit = (data: ArticleFormData) => {
-        console.log('onSubmit called', data)
-        console.log('content:', content)
-
         // 手动验证
         if (!data.title || data.title.trim().length === 0) {
             toast.error('标题不能为空')
             return
         }
 
-        if (!content || content.length < 10) {
+        if (!data.content || data.content.length < 10) {
             toast.error('内容至少需要 10 个字符')
             return
         }
 
-        console.log('Validation passed, calling API...')
+        if (!data.categoryId) {
+            toast.error('请选择分类')
+            return
+        }
 
-        createMutation.mutate({
-            ...data,
-            content: content,
-        })
+        createMutation.mutate(data)
     }
 
     return (
@@ -148,26 +146,69 @@ export default function CreateArticlePage() {
                         )}
                     />
 
-                    {/* Markdown 编辑器 */}
-                    <FormItem>
-                        <FormLabel>内容 *</FormLabel>
-                        <FormControl>
-                            <div data-color-mode="light">
-                                <MDEditor
-                                    value={content}
-                                    onChange={(val) => setContent(val || '')}
-                                    height={500}
-                                    preview="edit"
-                                />
-                            </div>
-                        </FormControl>
-                        <FormMessage />
-                        {content.length < 10 && (
-                            <p className="text-sm text-destructive">
-                                内容至少 10 字符
-                            </p>
+                    {/* 分类选择 */}
+                    <FormField
+                        control={form.control}
+                        name="categoryId"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>分类 *</FormLabel>
+                                <FormControl>
+                                    <CategorySelect
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        placeholder="选择文章分类"
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
                         )}
-                    </FormItem>
+                    />
+
+                    {/* 标签选择 */}
+                    <FormField
+                        control={form.control}
+                        name="tagIds"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>标签（最多5个）</FormLabel>
+                                <FormControl>
+                                    <TagMultiSelect
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        maxTags={5}
+                                        placeholder="选择文章标签"
+                                    />
+                                </FormControl>
+                                <FormDescription>
+                                    为文章添加标签，方便读者查找相关内容
+                                </FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    {/* Markdown 编辑器 */}
+                    <FormField
+                        control={form.control}
+                        name="content"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>内容 *</FormLabel>
+                                <FormControl>
+                                    <div data-color-mode="light">
+                                        <MDEditor
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            height={500}
+                                            preview="edit"
+                                        />
+                                    </div>
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
                     {/* 文章类型 */}
                     <FormField
