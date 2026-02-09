@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { Input } from '@/components/ui/input'
 import {
     Select,
@@ -62,7 +63,7 @@ export function ArticleSearch({ onSearch, defaultValues = {} }: ArticleSearchPro
 
             {/* 状态筛选 */}
             <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectTrigger suppressHydrationWarning className="w-full sm:w-[180px]">
                     <SelectValue placeholder="选择状态" />
                 </SelectTrigger>
                 <SelectContent>
@@ -102,5 +103,3 @@ export function ArticleSearch({ onSearch, defaultValues = {} }: ArticleSearchPro
         </div>
     )
 }
-
-import React from 'react'

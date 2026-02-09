@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import dynamic from 'next/dynamic'
-import { getArticleById, updateArticle, publishArticle } from '@/lib/api'
+import { getArticleById, updateArticle, publishArticle, fetchBingWallpaper } from '@/lib/api'
 import { ArticleSchema, type ArticleFormData } from '@/lib/validations'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -30,11 +30,14 @@ import {
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
-import { ArrowLeft, Save, Send } from 'lucide-react'
+import { ArrowLeft, Save, Send, Wand2 } from 'lucide-react'
 import Link from 'next/link'
 import { CategorySelect } from '@/components/features/CategorySelect'
 import { TagMultiSelect } from '@/components/features/TagMultiSelect'
 import { ImageUpload } from '@/components/features/ImageUpload'
+import { imageUploadCommand } from '@/lib/mdEditorCommands'
+import { commands } from '@uiw/react-md-editor'
+import { useBingWallpaper } from '@/hooks/useBingWallpaper'
 
 // 动态导入 Markdown 编辑器
 const MDEditor = dynamic(
@@ -108,6 +111,9 @@ export default function EditArticlePage() {
             router.push('/dashboard/articles')
         },
     })
+
+    // 使用必应壁纸Hook
+    const { bingLoading, handleUseBingWallpaper } = useBingWallpaper(form)
 
     const onSubmit = (data: ArticleFormData) => {
         // 手动验证
@@ -205,17 +211,29 @@ export default function EditArticlePage() {
                             <FormItem>
                                 <FormLabel>封面图</FormLabel>
                                 <FormControl>
-                                    <ImageUpload
-                                        value={field.value}
-                                        onChange={(data) => {
-                                            form.setValue('coverImage', data.url)
-                                            form.setValue('coverImageId', Number(data.fileId))
-                                        }}
-                                        onRemove={() => {
-                                            form.setValue('coverImage', '')
-                                            form.setValue('coverImageId', undefined)
-                                        }}
-                                    />
+                                    <div className="space-y-2">
+                                        <ImageUpload
+                                            value={field.value}
+                                            onChange={(data) => {
+                                                form.setValue('coverImage', data.url)
+                                                form.setValue('coverImageId', Number(data.fileId))
+                                            }}
+                                            onRemove={() => {
+                                                form.setValue('coverImage', '')
+                                                form.setValue('coverImageId', undefined)
+                                            }}
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={handleUseBingWallpaper}
+                                            disabled={bingLoading}
+                                            className="w-full"
+                                        >
+                                            <Wand2 className="h-4 w-4 mr-2" />
+                                            {bingLoading ? '获取中...' : '使用必应壁纸'}
+                                        </Button>
+                                    </div>
                                 </FormControl>
                                 <FormDescription>
                                     为文章设置封面图，将显示在列表和详情页
@@ -259,6 +277,11 @@ export default function EditArticlePage() {
                                             onChange={field.onChange}
                                             height={500}
                                             preview="edit"
+                                            commands={[
+                                                ...commands.getCommands(),
+                                                commands.divider,
+                                                imageUploadCommand
+                                            ]}
                                         />
                                     </div>
                                 </FormControl>

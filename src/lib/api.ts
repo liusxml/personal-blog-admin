@@ -78,6 +78,19 @@ export async function fetchWithAuth<T>(
     return json.data
 }
 
+/**
+ * 获取随机必应壁纸
+ * 
+ * 从近7天的必应壁纸中随机返回一张，用于文章封面选择
+ * 
+ * @returns 壁纸URL
+ * @throws Error 当获取失败时
+ */
+export async function fetchBingWallpaper(): Promise<string> {
+    const response = await fetchWithAuth<string>('/api/v1/admin/wallpapers/bing')
+    return response
+}
+
 // ==================== 认证 API ====================
 
 export async function login(data: LoginRequest): Promise<LoginResponse> {
