@@ -15,6 +15,11 @@ export const ArticleSchema = z.object({
     content: z.string()
         .min(10, '内容至少10字符'),
 
+    coverImage: z.string()
+        .url('请输入有效的URL')
+        .optional()
+        .or(z.literal('')),
+
     coverImageId: z.number().optional(),
 
     categoryId: z.string().min(1, '请选择分类'),

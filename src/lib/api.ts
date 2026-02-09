@@ -155,14 +155,30 @@ export async function getArticleById(id: string): Promise<ArticleDetailVO> {
 }
 
 export async function createArticle(data: ArticleInput): Promise<string> {
+    // 转换 boolean 为 Integer (0/1)
+    const payload = {
+        ...data,
+        isTop: data.isTop ? 1 : 0,
+        isFeatured: data.isFeatured ? 1 : 0,
+        isCommentDisabled: data.isCommentDisabled ? 1 : 0,
+    }
+
     return fetchWithAuth<ApiResponse<string>>('/api/v1/admin/articles', {
         method: 'POST',
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
     }).then(res => res.data)
 }
 
 export async function updateArticle(id: string, data: ArticleInput): Promise<void> {
-    const payload = { ...data, id }
+    // 转换 boolean 为 Integer (0/1)
+    const payload = {
+        ...data,
+        id,
+        isTop: data.isTop ? 1 : 0,
+        isFeatured: data.isFeatured ? 1 : 0,
+        isCommentDisabled: data.isCommentDisabled ? 1 : 0,
+    }
+
     return fetchWithAuth<ApiResponse<void>>(`/api/v1/admin/articles/${id}`, {
         method: 'PUT',
         body: JSON.stringify(payload),

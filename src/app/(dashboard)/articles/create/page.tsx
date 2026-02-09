@@ -33,6 +33,7 @@ import { ArrowLeft, Save, Send } from 'lucide-react'
 import Link from 'next/link'
 import { CategorySelect } from '@/components/features/CategorySelect'
 import { TagMultiSelect } from '@/components/features/TagMultiSelect'
+import { ImageUpload } from '@/components/features/ImageUpload'
 
 // 动态导入 Markdown 编辑器（客户端only）
 const MDEditor = dynamic(
@@ -48,6 +49,7 @@ export default function CreateArticlePage() {
             title: '',
             summary: '',
             content: '',
+            coverImage: '',
             categoryId: '',
             tagIds: [],
             type: 1,
@@ -119,6 +121,34 @@ export default function CreateArticlePage() {
                                         {...field}
                                     />
                                 </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    {/* 封面图 */}
+                    <FormField
+                        control={form.control}
+                        name="coverImage"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>封面图</FormLabel>
+                                <FormControl>
+                                    <ImageUpload
+                                        value={field.value}
+                                        onChange={(data) => {
+                                            form.setValue('coverImage', data.url)
+                                            form.setValue('coverImageId', Number(data.fileId))
+                                        }}
+                                        onRemove={() => {
+                                            form.setValue('coverImage', '')
+                                            form.setValue('coverImageId', undefined)
+                                        }}
+                                    />
+                                </FormControl>
+                                <FormDescription>
+                                    为文章设置封面图，将显示在列表和详情页
+                                </FormDescription>
                                 <FormMessage />
                             </FormItem>
                         )}
