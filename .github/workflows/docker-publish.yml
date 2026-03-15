@@ -1,0 +1,57 @@
+# 工作流名称（在 GitHub Actions 页面显示的名称）
+name: Build and Push Admin Image
+
+# 触发条件：当代码被推送到 main 分支时，自动触发这个工作流
+on:
+  push:
+    branches: [ "main" ]
+
+# 工作流包含的任务（jobs）
+jobs:
+  build-and-push:
+    # 指定运行环境：使用 GitHub 提供的免费 Ubuntu 云服务器
+    runs-on: ubuntu-latest
+
+    # 任务的具体步骤，按顺序执行
+    steps:
+      # 步骤 1：把仓库代码克隆到云服务器
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      # 步骤 2：登录到 Docker Hub（官方推荐：Login 在 Buildx 之前）
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 步骤 3：安装 Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 步骤 4：构建镜像并推送到 Docker Hub
+      # docker/build-push-action 是 Docker 官方提供的核心动作
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          # context: 使用 Path context 模式（配合 actions/checkout 使用）
+          # 这样 .dockerignore 文件才能被正确处理
+          context: .
+          # push: true 表示构建完成后直接推送到 Docker Hub
+          push: true
+          # tags: 推送的镜像标签，同时打两个标签：
+          #   latest         → 始终指向最新构建，方便直接使用
+          #   sha-xxxxxxx    → 当前 commit 的唯一标识，方便回滚到特定版本
+          tags: |
+            ${{ vars.DOCKERHUB_USERNAME }}/personal-blog-admin:latest
+            ${{ vars.DOCKERHUB_USERNAME }}/personal-blog-admin:sha-${{ github.sha }}
+          # build-args: 构建时注入 NEXT_PUBLIC_API_URL（打包进客户端 JS）
+          # 此变量供浏览器端使用，必须在构建时确定，无法在运行时通过 ENV 修改
+          # Admin 运行时还会读取 BACKEND_URL（Dockerfile 中已设默认值 http://backend:8080）
+          # 用于 next.config.ts rewrites 服务端代理，无需在此注入
+          build-args: |
+            NEXT_PUBLIC_API_URL=https://api.chonkybird.com
+          # cache-from/cache-to: 启用 GitHub Actions 的构建缓存（GHA Cache）
+          # 第一次构建后，后续构建会复用缓存，显著加快速度（npm 包不用重复下载）
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

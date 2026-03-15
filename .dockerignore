@@ -1,0 +1,30 @@
+# Git
+.git
+.gitignore
+.github
+
+# IDE / Editor
+.idea
+.vscode
+
+# macOS
+.DS_Store
+
+# Dependencies — will be installed inside Docker
+node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# Logs
+*.log
+logs/
+
+# Environment files (secrets must not enter the image)
+.env
+.env.local
+.env.*.local
+
+# Documentation
+*.md
