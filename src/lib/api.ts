@@ -423,9 +423,9 @@ export async function getMetricsList(): Promise<MetricsList> {
 // 获取具体指标
 export async function getMetric(name: string, tags?: Record<string, string>): Promise<ActuatorMetric> {
     const tagParams = tags
-        ? '?' + Object.entries(tags).map(([k, v]) => `tag = ${k}:${v} `).join('&')
+        ? '?' + Object.entries(tags).map(([k, v]) => `tag=${k}:${v}`).join('&')
         : ''
-    return fetchActuator<ActuatorMetric>(`/ actuator / metrics / ${name}${tagParams} `)
+    return fetchActuator<ActuatorMetric>(`/actuator/metrics/${name}${tagParams}`)
 }
 
 // 获取仪表盘统计数据（从 Micrometer 业务指标）
