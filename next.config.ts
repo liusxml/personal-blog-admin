@@ -11,6 +11,11 @@ const nextConfig: NextConfig = {
         source: '/api/:path*',
         destination: `${backendUrl}/api/:path*`,
       },
+      {
+        // Actuator 端点代理（仪表盘健康检查 + 指标数据）
+        source: '/actuator/:path*',
+        destination: `${backendUrl}/actuator/:path*`,
+      },
     ];
   },
 };

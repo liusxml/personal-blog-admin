@@ -406,14 +406,9 @@ export interface DashboardMetrics {
     commentsPending: number
 }
 
-// 直接访问 Actuator 端点（后端已配置为白名单，无需认证）
-// 注意: Actuator 端点直接访问 8080 端口，不经过 Next.js 代理
+// 访问 Actuator 端点（通过 Next.js rewrites 代理到后端）
 async function fetchActuator<T>(path: string): Promise<T> {
-    const actuatorBaseUrl = typeof window !== 'undefined'
-        ? 'http://localhost:8080'  // 浏览器端直接访问后端
-        : API_BASE_URL                // 服务端使用配置的 URL
-
-    const res = await fetch(`${actuatorBaseUrl}${path}`)
+    const res = await fetch(path)
     if (!res.ok) {
         throw new Error(`Actuator request failed: ${res.statusText}`)
     }
