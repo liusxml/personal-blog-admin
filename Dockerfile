@@ -40,6 +40,11 @@ COPY . .
 ARG NEXT_PUBLIC_API_URL=https://api.chonkybird.com
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
+# ── BACKEND_URL：构建时注入 rewrites() 代理目标地址 ──────────────────────────
+# next.config.ts 中的 rewrites() 在 next build 时编译，必须在此阶段设置
+ARG BACKEND_URL=http://backend:8080
+ENV BACKEND_URL=$BACKEND_URL
+
 # NEXT_TELEMETRY_DISABLED=1：禁用 Next.js 遥测数据收集（官方隐私保护建议）
 ENV NEXT_TELEMETRY_DISABLED=1
 
