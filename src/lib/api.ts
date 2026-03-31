@@ -545,3 +545,52 @@ export async function mergeTags(sourceId: string, targetId: string): Promise<voi
         method: 'POST',
     })
 }
+
+// ==================== AI API ====================
+
+/** 参考文章摘要 */
+export interface ArticleSummaryAI {
+    articleId: string
+    title: string
+    summary?: string
+}
+
+/** RAG 问答请求 */
+export interface AskRequest {
+    question: string
+}
+
+/** RAG 问答响应 */
+export interface AskResponse {
+    answer: string
+    sources: ArticleSummaryAI[]
+}
+
+/**
+ * 批量重建所有已发布文章的 Qdrant 向量索引
+ * 需要 JWT 管理员权限
+ * @returns 成功重建的文章数
+ */
+export async function rebuildEmbeddings(): Promise<number> {
+    return fetchWithAuth<number>('/api/v1/admin/articles/rebuild-embeddings', {
+        method: 'POST',
+    })
+}
+
+/**
+ * RAG 智能问答（公开接口，不需要 JWT）
+ * @param data 问题请求体
+ * @returns AI 回答及参考文章列表
+ */
+export async function askAi(data: AskRequest): Promise<AskResponse> {
+    const res = await fetch(`${API_BASE_URL}/api/v1/ai/ask`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+    })
+    const json = await res.json()
+    if (json.code !== 0 && json.code !== '200') {
+        throw new Error(json.message || 'AI 服务异常')
+    }
+    return json.data
+}

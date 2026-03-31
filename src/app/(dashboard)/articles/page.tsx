@@ -10,6 +10,7 @@ import {
     publishArticle,
     archiveArticle,
     unarchiveArticle,
+    rebuildEmbeddings,
 } from '@/lib/api'
 import { ArticleSearch } from '@/components/features/ArticleSearch'
 import { Button } from '@/components/ui/button'
@@ -38,7 +39,7 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { ArticleQuery } from '@/types'
-import { PlusCircle, Edit, Trash2, Eye, Archive, ArchiveRestore, Send } from 'lucide-react'
+import { PlusCircle, Edit, Trash2, Eye, Archive, ArchiveRestore, Send, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function ArticlesPage() {
@@ -53,6 +54,7 @@ export default function ArticlesPage() {
     })
 
     const [deleteId, setDeleteId] = useState<string | null>(null)
+    const [rebuildConfirmOpen, setRebuildConfirmOpen] = useState(false)
 
     // 获取文章列表
     const { data, isLoading } = useQuery({
@@ -100,6 +102,19 @@ export default function ArticlesPage() {
         },
     })
 
+    // 批量重建向量索引
+    const rebuildMutation = useMutation({
+        mutationFn: rebuildEmbeddings,
+        onSuccess: (count) => {
+            toast.success(`向量索引重建完成，共处理 ${count} 篇文章`)
+            setRebuildConfirmOpen(false)
+        },
+        onError: (err: Error) => {
+            toast.error(`重建失败：${err.message}`)
+            setRebuildConfirmOpen(false)
+        },
+    })
+
     const handleSearch = (newQuery: ArticleQuery) => {
         // 直接使用新的查询参数，确保重置时不保留旧值
         setQuery({
@@ -134,12 +149,24 @@ export default function ArticlesPage() {
                     <h2 className="text-2xl font-bold">文章管理</h2>
                     <p className="text-muted-foreground">管理您的博客文章</p>
                 </div>
-                <Button asChild>
-                    <Link href="/articles/create">
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        新建文章
-                    </Link>
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button
+                        id="rebuild-embeddings-btn"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setRebuildConfirmOpen(true)}
+                        disabled={rebuildMutation.isPending}
+                    >
+                        <RefreshCw className={`mr-2 h-4 w-4 ${rebuildMutation.isPending ? 'animate-spin' : ''}`} />
+                        重建向量
+                    </Button>
+                    <Button asChild>
+                        <Link href="/articles/create">
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            新建文章
+                        </Link>
+                    </Button>
+                </div>
             </div>
 
             {/* 搜索筛选 */}
@@ -322,6 +349,30 @@ export default function ArticlesPage() {
                             onClick={() => deleteId && deleteMutation.mutate(deleteId)}
                         >
                             确定删除
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* 重建向量确认对话框 */}
+            <AlertDialog open={rebuildConfirmOpen} onOpenChange={setRebuildConfirmOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>确认重建向量索引？</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            此操作将对所有已发布文章重新生成 Qdrant 向量，会消耗 DashScope
+                            Token 配额。文章数量较多时可能需要较长时间，请勿重复点击。
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={rebuildMutation.isPending}>
+                            取消
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => rebuildMutation.mutate()}
+                            disabled={rebuildMutation.isPending}
+                        >
+                            {rebuildMutation.isPending ? '重建中…' : '确认重建'}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

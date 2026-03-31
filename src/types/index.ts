@@ -350,3 +350,51 @@ export interface TagQuery {
     name?: string
 }
 
+// ==================== Ops AI Agent 相关 ====================
+
+/** AI 回复的聊天消息（对应后端 event: message） */
+export interface OpsMessage {
+    role: 'user' | 'assistant'
+    content: string
+    timestamp: number
+}
+
+/** 工具调用通知（对应后端 event: tool_call） */
+export interface OpsToolCall {
+    toolName: string
+    timestamp: number
+}
+
+/** SSE 流状态 */
+export type OpsStreamStatus = 'idle' | 'connecting' | 'streaming' | 'done' | 'error'
+
+/** useOpsStream hook 返回值 */
+export interface OpsStreamState {
+    /** AI 逐字流式回复内容（拼接中） */
+    streamingText: string
+    /** 终端输出行（来自 event: ops_log） */
+    terminalLines: string[]
+    /** 最近一次工具调用（来自 event: tool_call） */
+    latestToolCall: OpsToolCall | null
+    /** 当前流状态 */
+    status: OpsStreamStatus
+    /** 错误信息 */
+    error: string | null
+    /** 发送用户指令，开启新的 SSE 流 */
+    send: (message: string) => void
+    /** 清空当前终端输出 */
+    clearTerminal: () => void
+}
+
+/** CI 事件（对应后端 ops_ci_event 表）*/
+export interface OpsCiEvent {
+    id: string
+    repoName: string
+    workflowName: string
+    status: 'queued' | 'in_progress' | 'completed'
+    conclusion: 'success' | 'failure' | 'cancelled' | 'timed_out' | 'action_required' | 'skipped' | null
+    headSha: string
+    headBranch: string | null
+    triggerEvent: string | null
+    createTime: string
+}

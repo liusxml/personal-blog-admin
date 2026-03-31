@@ -123,3 +123,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ── Terminal cursor blink animation (used in TerminalPanel) ── */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}

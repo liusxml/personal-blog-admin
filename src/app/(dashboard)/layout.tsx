@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { useAuthStore } from '@/stores/useAuthStore'
 import {
     Sidebar,
@@ -17,6 +18,8 @@ import {
 } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { AiAssistantDialog } from '@/components/features/AiAssistantDialog'
+import { Bot } from 'lucide-react'
 
 const menuItems = [
     { title: '仪表盘', href: '/dashboard', icon: '📊' },
@@ -25,9 +28,10 @@ const menuItems = [
     { title: '标签管理', href: '/tags', icon: '🏷️' },
     { title: '评论管理', href: '/comments', icon: '💬' },
     { title: '文件管理', href: '/files', icon: '📦' },
+    { title: 'Ops Copilot', href: '/ops', icon: '🤖' },
 ]
 
-function AppSidebar() {
+function AppSidebar({ onOpenAi }: { onOpenAi: () => void }) {
     const pathname = usePathname()
     const router = useRouter()
     const { user, logout } = useAuthStore()
@@ -70,6 +74,18 @@ function AppSidebar() {
             </SidebarContent>
             <SidebarFooter className="border-t p-4">
                 <div className="flex flex-col gap-2">
+                    {/* AI 助手入口 */}
+                    <Button
+                        id="ai-assistant-trigger"
+                        variant="outline"
+                        size="sm"
+                        className="w-full justify-start gap-2 border-dashed"
+                        onClick={onOpenAi}
+                    >
+                        <Bot className="h-4 w-4 text-primary" />
+                        <span>AI 助手</span>
+                        <span className="ml-auto text-xs text-muted-foreground">✨</span>
+                    </Button>
                     <div className="text-sm text-muted-foreground">
                         {user?.nickname || user?.username || '未登录'}
                     </div>
@@ -87,9 +103,11 @@ export default function DashboardLayout({
 }: {
     children: React.ReactNode
 }) {
+    const [aiOpen, setAiOpen] = useState(false)
+
     return (
         <SidebarProvider>
-            <AppSidebar />
+            <AppSidebar onOpenAi={() => setAiOpen(true)} />
             <SidebarInset>
                 <header className="flex h-14 items-center gap-4 border-b px-6">
                     <SidebarTrigger />
@@ -98,6 +116,8 @@ export default function DashboardLayout({
                 </header>
                 <main className="flex-1 p-6">{children}</main>
             </SidebarInset>
+            {/* 全局 AI 助手弹窗 */}
+            <AiAssistantDialog open={aiOpen} onOpenChange={setAiOpen} />
         </SidebarProvider>
     )
 }
