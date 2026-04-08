@@ -9,7 +9,7 @@ export default function ContainersPage() {
                     </p>
                 </div>
                 <a
-                    href="/dozzle"
+                    href="/dozzle/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs text-muted-foreground hover:text-foreground transition-colors"
@@ -18,7 +18,7 @@ export default function ContainersPage() {
                 </a>
             </div>
             <iframe
-                src="/dozzle"
+                src="/dozzle/"
                 className="flex-1 w-full border-0"
                 title="Dozzle 容器日志监控"
                 // 允许同源 iframe（Dozzle 通过 Next.js 代理，与 Admin 同域）

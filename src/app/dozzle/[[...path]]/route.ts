@@ -43,11 +43,6 @@ async function handler(
                 : (request.body as BodyInit),
             // @ts-expect-error – Node.js fetch 需要 duplex:'half' 才能流式转发 body
             duplex: 'half',
-            // 不自动跟随重定向：
-            // Dozzle 会将 /dozzle 重定向到 /dozzle/，若 fetch 自动跟随，
-            // 会丢失 Remote-User 等自定义 Header → 401 Unauthorized
-            // 返回 301 给浏览器，浏览器再次请求 /dozzle/（经过 proxy.ts 重新注入 Header）
-            redirect: 'manual',
             // 禁用自动 gzip 解压，保持原始响应流（对 SSE 很重要）
             compress: false,
         })
