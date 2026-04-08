@@ -105,6 +105,7 @@ export default function DashboardLayout({
     children: React.ReactNode
 }) {
     const [aiOpen, setAiOpen] = useState(false)
+    const pathname = usePathname()
 
     return (
         <SidebarProvider>
