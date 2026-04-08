@@ -29,6 +29,7 @@ const menuItems = [
     { title: '评论管理', href: '/comments', icon: '💬' },
     { title: '文件管理', href: '/files', icon: '📦' },
     { title: 'Ops Copilot', href: '/ops', icon: '🤖' },
+    { title: '容器监控', href: '/containers', icon: '🖥️' },
 ]
 
 function AppSidebar({ onOpenAi }: { onOpenAi: () => void }) {
@@ -114,7 +115,10 @@ export default function DashboardLayout({
                     <Separator orientation="vertical" className="h-6" />
                     <h1 className="text-lg font-semibold">博客后台管理</h1>
                 </header>
-                <main className="flex-1 p-6">{children}</main>
+                {/* 容器监控页面不要 padding，其他页面保持 p-6 */}
+                <main className={pathname === '/containers' ? 'flex-1 overflow-hidden' : 'flex-1 p-6'}>
+                    {children}
+                </main>
             </SidebarInset>
             {/* 全局 AI 助手弹窗 */}
             <AiAssistantDialog open={aiOpen} onOpenChange={setAiOpen} />
