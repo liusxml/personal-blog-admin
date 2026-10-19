@@ -6,22 +6,22 @@
 
 ## 技术栈
 
-| 模块 | 技术 | 版本 |
-|:---|:---|:---|
-| 核心框架 | Next.js | 16.x（App Router） |
-| UI 库 | React | 19.x |
-| 语言 | TypeScript | 5.x |
-| 样式 | Tailwind CSS | v4 |
-| 组件库 | Shadcn/UI（Radix UI） | latest |
-| 服务端状态 | TanStack Query | v5 |
-| 客户端状态 | Zustand | v5（持久化） |
-| 表单验证 | Zod | v4 |
-| 表格 | TanStack Table | v8 |
-| Markdown 编辑器 | @uiw/react-md-editor | v4 |
-| 图标 | Lucide React | latest |
-| Toast 通知 | Sonner | v2 |
-| Cookie 管理 | js-cookie | v3 |
-| 文件 MD5 | spark-md5 | v3 |
+| 模块            | 技术                  | 版本               |
+| :-------------- | :-------------------- | :----------------- |
+| 核心框架        | Next.js               | 16.x（App Router） |
+| UI 库           | React                 | 19.x               |
+| 语言            | TypeScript            | 5.x                |
+| 样式            | Tailwind CSS          | v4                 |
+| 组件库          | Shadcn/UI（Radix UI） | latest             |
+| 服务端状态      | TanStack Query        | v5                 |
+| 客户端状态      | Zustand               | v5（持久化）       |
+| 表单验证        | Zod                   | v4                 |
+| 表格            | TanStack Table        | v8                 |
+| Markdown 编辑器 | @uiw/react-md-editor  | v4                 |
+| 图标            | Lucide React          | latest             |
+| Toast 通知      | Sonner                | v2                 |
+| Cookie 管理     | js-cookie             | v3                 |
+| 文件 MD5        | spark-md5             | v3                 |
 
 ---
 
@@ -235,12 +235,12 @@ useOpsStream Hook
 
 ### 状态管理策略
 
-| 数据类型 | 管理方案 | 说明 |
-|:---|:---|:---|
-| 服务端数据（文章、评论等） | TanStack Query | 自动缓存、失效、重新获取 |
-| 认证状态（User + Token） | Zustand + persist | 持久化到 localStorage |
-| AI 聊天历史 | Zustand | 内存存储，页面刷新丢失 |
-| 本地表单状态 | React Hook Form + Zod | 表单验证 + 错误提示 |
+| 数据类型                   | 管理方案              | 说明                     |
+| :------------------------- | :-------------------- | :----------------------- |
+| 服务端数据（文章、评论等） | TanStack Query        | 自动缓存、失效、重新获取 |
+| 认证状态（User + Token）   | Zustand + persist     | 持久化到 localStorage    |
+| AI 聊天历史                | Zustand               | 内存存储，页面刷新丢失   |
+| 本地表单状态               | React Hook Form + Zod | 表单验证 + 错误提示      |
 
 ---
 
@@ -268,19 +268,19 @@ npm run dev
 
 ### 可用脚本
 
-| 命令 | 说明 |
-|:---|:---|
-| `npm run dev` | 开发服务器（端口 3001，热重载） |
-| `npm run build` | 构建生产包（standalone 输出） |
-| `npm run start` | 启动生产服务（需先 build） |
-| `npm run lint` | ESLint 代码检查 |
+| 命令            | 说明                            |
+| :-------------- | :------------------------------ |
+| `npm run dev`   | 开发服务器（端口 3001，热重载） |
+| `npm run build` | 构建生产包（standalone 输出）   |
+| `npm run start` | 启动生产服务（需先 build）      |
+| `npm run lint`  | ESLint 代码检查                 |
 
 ### 环境变量
 
-| 变量 | 说明 | 本地默认值 |
-|:---|:---|:---|
-| `NEXT_PUBLIC_API_URL` | 后端 API 基础 URL（**构建时**打包进客户端 JS） | `http://localhost:8080` |
-| `BACKEND_URL` | 服务端 rewrites 代理目标（**运行时**读取，仅服务端可见） | `http://localhost:8080` |
+| 变量                  | 说明                                                     | 本地默认值              |
+| :-------------------- | :------------------------------------------------------- | :---------------------- |
+| `NEXT_PUBLIC_API_URL` | 后端 API 基础 URL（**构建时**打包进客户端 JS）           | `http://localhost:8080` |
+| `BACKEND_URL`         | 服务端 rewrites 代理目标（**运行时**读取，仅服务端可见） | `http://localhost:8080` |
 
 > ⚠️ `NEXT_PUBLIC_API_URL` 在 `next build` 时打包进客户端 JS，**运行时无法修改**。Docker 镜像的生产地址通过 CI/CD 构建参数注入（`https://api.chonkybird.com`）。
 
@@ -298,11 +298,11 @@ npx shadcn@latest add form
 
 ### Docker 多阶段构建
 
-| 阶段 | 基础镜像 | 作用 |
-|:---|:---|:---|
-| `deps` | `node:20-alpine` | 安装 npm 依赖（BuildKit 缓存挂载加速） |
+| 阶段      | 基础镜像         | 作用                                    |
+| :-------- | :--------------- | :-------------------------------------- |
+| `deps`    | `node:20-alpine` | 安装 npm 依赖（BuildKit 缓存挂载加速）  |
 | `builder` | `node:20-alpine` | 执行 `next build`，生成 standalone 产物 |
-| `runner` | `node:20-alpine` | 仅包含运行时产物，最小化镜像体积 |
+| `runner`  | `node:20-alpine` | 仅包含运行时产物，最小化镜像体积        |
 
 关键配置：
 
@@ -327,10 +327,10 @@ Checkout → Docker Login → Setup Buildx → Build & Push
 
 **所需 GitHub Secrets / Variables：**
 
-| 名称 | 类型 | 说明 |
-|:---|:---|:---|
-| `DOCKERHUB_USERNAME` | Variable | Docker Hub 用户名 |
-| `DOCKERHUB_TOKEN` | Secret | Docker Hub Access Token |
+| 名称                 | 类型     | 说明                    |
+| :------------------- | :------- | :---------------------- |
+| `DOCKERHUB_USERNAME` | Variable | Docker Hub 用户名       |
+| `DOCKERHUB_TOKEN`    | Secret   | Docker Hub Access Token |
 
 ### 运行 Docker 镜像
 
@@ -345,21 +345,21 @@ docker run -d \
 
 ## 后端 API 对应关系
 
-| 模块 | 接口前缀 | 关键端点 |
-|:---|:---|:---|
-| 认证 | `/api/v1/auth` | `POST /login`，`POST /logout` |
-| 用户 | `/api/v1/users` | `GET /me` |
-| 文章（管理端） | `/api/v1/admin/articles` | CRUD + `/{id}/publish` + `/{id}/archive` + `/rebuild-embeddings` |
-| 分类（管理端） | `/api/v1/admin/categories` | CRUD + `/tree` + `/{id}/move` |
-| 标签（管理端） | `/api/v1/admin/tags` | CRUD + `/batch` + `/{id}/merge` |
-| 评论（管理端） | `/api/v1/admin/comments` | 分页列表 |
-| 评论审核 | `/api/v1/comments/audit` | `/{id}/approve`，`/{id}/reject`，`DELETE /{id}` |
-| 评论举报 | `/api/v1/comments/reports` | 列表 + `/{id}/approve` + `/{id}/reject` |
-| 文件 | `/api/v1/files` | 分页 + `/presigned` + `/{id}/confirm` + `/{id}/access-url` + `DELETE /{id}` |
-| AI | `/api/v1/ai` | `POST /ask`（RAG 问答） |
-| Ops | `/api/v1/ops` | `GET /chat`（SSE 流式运维） |
-| 壁纸 | `/api/v1/admin/wallpapers` | `GET /bing`（必应随机壁纸） |
-| Actuator | `/actuator` | `/health`，`/metrics`（通过 rewrites 代理） |
+| 模块           | 接口前缀                   | 关键端点                                                                    |
+| :------------- | :------------------------- | :-------------------------------------------------------------------------- |
+| 认证           | `/api/v1/auth`             | `POST /login`，`POST /logout`                                               |
+| 用户           | `/api/v1/users`            | `GET /me`                                                                   |
+| 文章（管理端） | `/api/v1/admin/articles`   | CRUD + `/{id}/publish` + `/{id}/archive` + `/rebuild-embeddings`            |
+| 分类（管理端） | `/api/v1/admin/categories` | CRUD + `/tree` + `/{id}/move`                                               |
+| 标签（管理端） | `/api/v1/admin/tags`       | CRUD + `/batch` + `/{id}/merge`                                             |
+| 评论（管理端） | `/api/v1/admin/comments`   | 分页列表                                                                    |
+| 评论审核       | `/api/v1/comments/audit`   | `/{id}/approve`，`/{id}/reject`，`DELETE /{id}`                             |
+| 评论举报       | `/api/v1/comments/reports` | 列表 + `/{id}/approve` + `/{id}/reject`                                     |
+| 文件           | `/api/v1/files`            | 分页 + `/presigned` + `/{id}/confirm` + `/{id}/access-url` + `DELETE /{id}` |
+| AI             | `/api/v1/ai`               | `POST /ask`（RAG 问答）                                                     |
+| Ops            | `/api/v1/ops`              | `GET /chat`（SSE 流式运维）                                                 |
+| 壁纸           | `/api/v1/admin/wallpapers` | `GET /bing`（必应随机壁纸）                                                 |
+| Actuator       | `/actuator`                | `/health`，`/metrics`（通过 rewrites 代理）                                 |
 
 ---
 
@@ -376,16 +376,16 @@ docker run -d \
 ```tsx
 // ✅ 服务端数据：TanStack Query
 const { data, isLoading } = useQuery({
-  queryKey: ['articles', query],
+  queryKey: ["articles", query],
   queryFn: () => getArticles(query),
-})
+});
 
 // ✅ 变更操作：useMutation + 使缓存失效
-const queryClient = useQueryClient()
+const queryClient = useQueryClient();
 const mutation = useMutation({
   mutationFn: deleteArticle,
-  onSuccess: () => queryClient.invalidateQueries({ queryKey: ['articles'] }),
-})
+  onSuccess: () => queryClient.invalidateQueries({ queryKey: ["articles"] }),
+});
 ```
 
 ### API 客户端规范
@@ -394,17 +394,17 @@ const mutation = useMutation({
 
 ```ts
 // ✅ 自动：携带 Authorization Header、处理 401、解包 ApiResponse<T>
-const article = await fetchWithAuth<ArticleDetailVO>(`/api/v1/admin/articles/${id}`)
+const article = await fetchWithAuth<ArticleDetailVO>(`/api/v1/admin/articles/${id}`);
 ```
 
 ### 文件命名规范
 
-| 类型 | 命名规范 | 示例 |
-|:---|:---|:---|
-| 页面 | `page.tsx` | `app/articles/page.tsx` |
-| 布局 | `layout.tsx` | `app/(dashboard)/layout.tsx` |
-| 组件 | PascalCase | `ArticleCard.tsx` |
-| Hooks | camelCase + `use` 前缀 | `useArticles.ts` |
-| Stores | camelCase + `use` 前缀 | `useAuthStore.ts` |
-| 工具函数 | camelCase | `uploadImage.ts` |
-| 类型文件 | camelCase | `index.ts` |
+| 类型     | 命名规范               | 示例                         |
+| :------- | :--------------------- | :--------------------------- |
+| 页面     | `page.tsx`             | `app/articles/page.tsx`      |
+| 布局     | `layout.tsx`           | `app/(dashboard)/layout.tsx` |
+| 组件     | PascalCase             | `ArticleCard.tsx`            |
+| Hooks    | camelCase + `use` 前缀 | `useArticles.ts`             |
+| Stores   | camelCase + `use` 前缀 | `useAuthStore.ts`            |
+| 工具函数 | camelCase              | `uploadImage.ts`             |
+| 类型文件 | camelCase              | `index.ts`                   |

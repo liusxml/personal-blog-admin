@@ -4,7 +4,7 @@ name: Build and Push Admin Image
 # 触发条件：当代码被推送到 main 分支时，自动触发这个工作流
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 # 工作流包含的任务（jobs）
 jobs:
