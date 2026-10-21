@@ -1,0 +1,52 @@
+name: Admin CI Quality Gate
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - '.gitignore'
+  # 支持在 GitHub Actions 页面手动触发检查
+  workflow_dispatch:
+
+# 最小权限原则：仅需读取源码即可完成静态检查与类型校验
+permissions:
+  contents: read
+
+# 并发控制：同一 PR 连续推送时，自动取消正在运行的旧检查任务，节省 Runner 资源
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-typecheck:
+    name: ESLint & TypeScript Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      # 配置 Node.js 22 LTS 环境，并开启基于 package-lock.json 的 npm 全局缓存
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      # 使用 npm ci 根据 lockfile 确定性安装依赖，比 npm install 更快且严格校验版本
+      - name: Install dependencies
+        run: npm ci
+
+      # 执行 ESLint 9 代码规范检查
+      - name: Run ESLint
+        run: npm run lint
+
+      # Next.js 16 路由类型生成 + TypeScript 全量类型检查（无需执行耗时的完整 next build）
+      - name: Run Next.js Typegen & TypeScript Check
+        run: |
+          npx next typegen
+          npx tsc --noEmit

@@ -4,7 +4,7 @@
 # 使用独立阶段缓存 node_modules，仅在 package.json 变化时重新安装
 # 参考：https://nextjs.org/docs/app/building-your-application/deploying#docker-image
 # ==============================================================================
-FROM node:20-alpine AS deps
+FROM node:22-alpine AS deps
 
 WORKDIR /app
 
@@ -26,7 +26,7 @@ RUN --mount=type=cache,target=/root/.npm \
 # 执行 next build，生成 standalone 输出（官方 Docker 部署推荐模式）
 # 参考：https://nextjs.org/docs/app/api-reference/config/next-config-js/output
 # ==============================================================================
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
@@ -48,14 +48,17 @@ ENV BACKEND_URL=$BACKEND_URL
 # NEXT_TELEMETRY_DISABLED=1：禁用 Next.js 遥测数据收集（官方隐私保护建议）
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN npm run build
+# ── 优化：挂载 /app/.next/cache 编译缓存目录 ────────────────────────────────
+# 配合 GitHub Actions 的 type=gha,mode=max，跨 CI 构建持久复用 Next.js 增量编译缓存
+RUN --mount=type=cache,target=/app/.next/cache \
+    npm run build
 
 # ==============================================================================
 # 第三阶段：运行（runner）
 # 仅包含 standalone 产物，镜像体积最小
 # standalone 模式由 next.config.ts output: 'standalone' 开启
 # ==============================================================================
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 
 WORKDIR /app
 

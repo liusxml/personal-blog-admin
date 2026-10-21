@@ -5,6 +5,7 @@
 
 # IDE / Editor
 .idea
+.run/
 .vscode
 
 # macOS
@@ -13,9 +14,10 @@
 # Dependencies — will be installed inside Docker
 node_modules/
 
-# Next.js build output
+# Next.js & TypeScript build output
 .next/
 out/
+tsconfig.tsbuildinfo
 
 # Logs
 *.log
@@ -26,5 +28,7 @@ logs/
 .env.local
 .env.*.local
 
-# Documentation
+# Documentation & Docker files
 *.md
+Dockerfile
+.dockerignore

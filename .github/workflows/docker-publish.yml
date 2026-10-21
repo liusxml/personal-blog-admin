@@ -1,10 +1,31 @@
 # 工作流名称（在 GitHub Actions 页面显示的名称）
 name: Build and Push Admin Image
 
-# 触发条件：当代码被推送到 main 分支时，自动触发这个工作流
+# 触发条件：
+# 1. push: 当业务代码被推送到 main 分支时自动触发（忽略纯文档和 IDE 配置变更，节省构建算力）
+# 2. workflow_dispatch: 支持在 GitHub Actions 网页端手动点击 "Run workflow" 触发重构建
 on:
   push:
     branches: ["main"]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - ".run/**"
+      - ".idea/**"
+      - ".vscode/**"
+  workflow_dispatch:
+
+# 并发控制（GitHub 官方推荐最佳实践）：
+# 同一工作流在同一分支上只保留最新一次运行；若短时间内连续推送，自动取消正在排队的旧构建，
+# 既节省 GitHub Actions 免费分钟数，又防止旧构建晚完成覆盖 Docker Hub 上的 :latest 标签
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# 最小权限原则（Security Best Practice）：
+# 构建并推送到 Docker Hub（含 GHA Cache 读写）仅需代码只读权限，显式收紧默认 GITHUB_TOKEN 权限
+permissions:
+  contents: read
 
 # 工作流包含的任务（jobs）
 jobs:
@@ -16,23 +37,23 @@ jobs:
     steps:
       # 步骤 1：把仓库代码克隆到云服务器
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       # 步骤 2：登录到 Docker Hub（官方推荐：Login 在 Buildx 之前）
       - name: Log in to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # 步骤 3：安装 Docker Buildx
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       # 步骤 4：构建镜像并推送到 Docker Hub
       # docker/build-push-action 是 Docker 官方提供的核心动作
       - name: Build and push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           # context: 使用 Path context 模式（配合 actions/checkout 使用）
           # 这样 .dockerignore 文件才能被正确处理
@@ -46,12 +67,11 @@ jobs:
             ${{ vars.DOCKERHUB_USERNAME }}/personal-blog-admin:latest
             ${{ vars.DOCKERHUB_USERNAME }}/personal-blog-admin:sha-${{ github.sha }}
           # build-args: 构建时注入 NEXT_PUBLIC_API_URL（打包进客户端 JS）
-          # 此变量供浏览器端使用，必须在构建时确定，无法在运行时通过 ENV 修改
+          # 优先读取 GitHub Variables 中的配置，未配置时自动回退到生产默认域名 https://api.chonkybird.com
           # Admin 运行时还会读取 BACKEND_URL（Dockerfile 中已设默认值 http://backend:8080）
-          # 用于 next.config.ts rewrites 服务端代理，无需在此注入
           build-args: |
-            NEXT_PUBLIC_API_URL=https://api.chonkybird.com
-          # cache-from/cache-to: 启用 GitHub Actions 的构建缓存（GHA Cache）
-          # 第一次构建后，后续构建会复用缓存，显著加快速度（npm 包不用重复下载）
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://api.chonkybird.com' }}
+          # cache-from/cache-to: 启用 GitHub Actions 的构建缓存（GHA Cache）并指定专属 scope
+          # mode=max 会缓存所有中间阶段（包括 deps 阶段的 node_modules），显著加快构建速度
+          cache-from: type=gha,scope=admin
+          cache-to: type=gha,scope=admin,mode=max
