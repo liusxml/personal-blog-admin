@@ -423,9 +423,18 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
   };
 }
 
+export interface ActuatorHealth {
+  status?: string;
+  components?: {
+    db?: { status?: string };
+    redis?: { status?: string };
+    [key: string]: { status?: string } | undefined;
+  };
+}
+
 // 获取健康状态
-export async function getHealth(): Promise<Record<string, unknown>> {
-  return fetchActuator<Record<string, unknown>>("/actuator/health");
+export async function getHealth(): Promise<ActuatorHealth> {
+  return fetchActuator<ActuatorHealth>("/actuator/health");
 }
 
 // ==================== 分类 API ====================

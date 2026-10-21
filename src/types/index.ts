@@ -94,6 +94,7 @@ export interface ArticleDetailVO {
   commentCount: number;
   categoryId?: string; // Long类型
   categoryName?: string;
+  tagIds?: string[]; // 标签 ID 列表（编辑页回显使用）
   tags?: string[];
   type?: ArticleType;
   originalUrl?: string;
