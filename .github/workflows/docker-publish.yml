@@ -75,3 +75,44 @@ jobs:
           # mode=max 会缓存所有中间阶段（包括 deps 阶段的 node_modules），显著加快构建速度
           cache-from: type=gha,scope=admin
           cache-to: type=gha,scope=admin,mode=max
+
+      # 步骤 5：GitOps — 检出 personal-blog-deploy 部署仓
+      - name: Checkout personal-blog-deploy
+        if: env.DEPLOY_REPO_TOKEN != ''
+        env:
+          DEPLOY_REPO_TOKEN: ${{ secrets.DEPLOY_REPO_TOKEN }}
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ github.repository_owner }}/personal-blog-deploy
+          token: ${{ secrets.DEPLOY_REPO_TOKEN }}
+          ref: main
+          path: deploy-repo
+
+      # 步骤 6：GitOps — 将 personal-blog/compose.yml 中的 admin 镜像标签更新为不可变版本 sha-xxxxxxx 并推送
+      - name: Update admin image tag in personal-blog-deploy
+        if: env.DEPLOY_REPO_TOKEN != ''
+        env:
+          DEPLOY_REPO_TOKEN: ${{ secrets.DEPLOY_REPO_TOKEN }}
+          IMAGE_TAG: sha-${{ github.sha }}
+        working-directory: deploy-repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for i in 1 2 3; do
+            git fetch origin main
+            git reset --hard origin/main
+            sed -i "s|image: .*/personal-blog-admin:.*|image: ${{ vars.DOCKERHUB_USERNAME }}/personal-blog-admin:${IMAGE_TAG}|g" personal-blog/compose.yml
+            if git diff --quiet personal-blog/compose.yml; then
+              echo "No image tag change needed."
+              break
+            fi
+            git add personal-blog/compose.yml
+            git commit -m "chore(gitops): update admin image to ${IMAGE_TAG}"
+            if git push origin main; then
+              echo "Successfully pushed GitOps update to personal-blog-deploy."
+              break
+            fi
+            echo "Push conflict detected, retrying ($i/3)..."
+            sleep 2
+          done
+
