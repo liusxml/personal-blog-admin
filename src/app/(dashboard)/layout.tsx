@@ -30,6 +30,7 @@ const menuItems = [
   { title: "文件管理", href: "/files", icon: "📦" },
   { title: "Ops Copilot", href: "/ops", icon: "🤖" },
   { title: "容器监控", href: "/containers", icon: "🖥️" },
+  { title: "MCP 接入", href: "/mcp-config", icon: "🔌" },
 ];
 
 function AppSidebar({ onOpenAi }: { onOpenAi: () => void }) {

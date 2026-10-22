@@ -32,7 +32,8 @@ export function proxy(request: NextRequest) {
     pathname.startsWith("/comments") ||
     pathname.startsWith("/files") ||
     pathname.startsWith("/ops") ||
-    pathname.startsWith("/containers");
+    pathname.startsWith("/containers") ||
+    pathname.startsWith("/mcp-config");
 
   // 未登录访问后台 → 重定向到登录页
   if (isDashboard && !token) {
@@ -78,6 +79,7 @@ export const config = {
     "/files/:path*",
     "/ops/:path*",
     "/containers/:path*",
+    "/mcp-config/:path*",
     "/dozzle/:path*",
     "/login",
   ],

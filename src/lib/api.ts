@@ -102,6 +102,21 @@ export async function getCurrentUser(): Promise<User> {
   return fetchWithAuth<User>("/api/v1/users/me");
 }
 
+/**
+ * 签发 MCP 客户端接入专用长效 Bearer Token（仅限管理员）
+ *
+ * @param expirationDays Token 有效天数（1~365 天，默认 30 天）
+ * @returns 包含 Bearer Token 及过期时间（秒）的响应对象
+ */
+export async function generateMcpToken(expirationDays = 30): Promise<LoginResponse> {
+  return fetchWithAuth<LoginResponse>(
+    `/api/v1/auth/mcp-token?expirationDays=${encodeURIComponent(String(expirationDays))}`,
+    {
+      method: "POST",
+    }
+  );
+}
+
 // ==================== 文章 API ====================
 
 export async function getArticles(query: ArticleQuery = {}): Promise<PageResult<ArticleListVO>> {
