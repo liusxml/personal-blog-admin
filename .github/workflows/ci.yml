@@ -6,9 +6,9 @@ on:
       - main
       - develop
     paths-ignore:
-      - '**.md'
-      - 'LICENSE'
-      - '.gitignore'
+      - "**.md"
+      - "LICENSE"
+      - ".gitignore"
   # 支持在 GitHub Actions 页面手动触发检查
   workflow_dispatch:
 
@@ -34,8 +34,8 @@ jobs:
       - name: Set up Node.js 22
         uses: actions/setup-node@v7
         with:
-          node-version: '22'
-          cache: 'npm'
+          node-version: "22"
+          cache: "npm"
 
       # 使用 npm ci 根据 lockfile 确定性安装依赖，比 npm install 更快且严格校验版本
       - name: Install dependencies

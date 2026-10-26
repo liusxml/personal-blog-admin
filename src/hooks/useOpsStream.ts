@@ -5,7 +5,15 @@ import type { OpsStreamStatus, OpsToolCall } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
-// ─── 返回值类型 ────────────────────────────────────────────────────────────────
+// ─── 模式与返回值类型 ──────────────────────────────────────────────────────────
+
+/**
+ * Ops Copilot 对话引擎模式
+ *
+ * - `langchain4j`：旧模式（LangChain4j AiServices + 本地 @Tool 执行 SSH，实时推送 ops_log 到右侧终端）
+ * - `spring-ai-mcp`：新模式（Spring AI ChatClient + Advisor 责任链 + MCP Client 回环调用 /mcp 工具）
+ */
+export type OpsChatMode = "langchain4j" | "spring-ai-mcp";
 
 export interface UseOpsStreamReturn {
   /** AI 当前正在流式输出的文本（每次 send 后重置） */
@@ -88,10 +96,15 @@ function parseSseChunk(chunk: string, onEvent: (type: string, data: string) => v
  *   - event: done      → 整轮对话结束，关闭流
  *   - event: error     → 服务端异常，更新 error 状态
  *
+ * @param mode  当前选中的对话引擎模式（默认 'langchain4j'）
+ * @param model Spring AI + MCP 模式下选中的 Gemini 模型名称（默认 'gemini-2.5-flash'）
  * @see https://developer.mozilla.org/zh-CN/docs/Web/API/Fetch_API
  * @see https://developer.mozilla.org/zh-CN/docs/Web/API/ReadableStream
  */
-export function useOpsStream(): UseOpsStreamReturn {
+export function useOpsStream(
+  mode: OpsChatMode = "langchain4j",
+  model = "gemini-2.5-flash"
+): UseOpsStreamReturn {
   const [streamingText, setStreamingText] = useState("");
   const [terminalLines, setTerminalLines] = useState<string[]>([]);
   const [latestToolCall, setLatestToolCall] = useState<OpsToolCall | null>(null);
@@ -143,9 +156,15 @@ export function useOpsStream(): UseOpsStreamReturn {
       // 读取 token（规则 4.1）
       const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
-      // 构建请求
-      const params = new URLSearchParams({ message, sessionId });
-      const url = `${API_BASE_URL}/api/v1/ops/chat?${params.toString()}`;
+      // 根据模式路由到不同的后端 SSE 接口：
+      // - langchain4j 模式：GET /api/v1/ops/chat?message=...&sessionId=...
+      // - spring-ai-mcp 模式：GET /api/v1/ops/mcp-chat?message=...&conversationId=...&model=...
+      const isMcpMode = mode === "spring-ai-mcp";
+      const endpoint = isMcpMode ? "/api/v1/ops/mcp-chat" : "/api/v1/ops/chat";
+      const params = new URLSearchParams(
+        isMcpMode ? { message, conversationId: sessionId, model } : { message, sessionId }
+      );
+      const url = `${API_BASE_URL}${endpoint}?${params.toString()}`;
       const ctrl = new AbortController();
       abortCtrlRef.current = ctrl;
 
@@ -245,7 +264,7 @@ export function useOpsStream(): UseOpsStreamReturn {
         }
       })();
     },
-    [abortCurrent]
+    [abortCurrent, mode, model]
   );
 
   return {

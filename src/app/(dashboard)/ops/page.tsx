@@ -1,15 +1,25 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { useOpsStream } from "@/hooks/useOpsStream";
+import { useOpsStream, type OpsChatMode } from "@/hooks/useOpsStream";
 import { TerminalPanel } from "@/components/features/ops/TerminalPanel";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Bot, User, SendHorizonal, Trash2, ShieldAlert } from "lucide-react";
+import { fetchWithAuth } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import type { OpsMessage } from "@/types";
@@ -138,6 +148,8 @@ function StreamingBubble({ text }: { text: string }) {
 // ─── 主页面 ────────────────────────────────────────────────────────────────────
 
 export default function OpsPage() {
+  const [mode, setMode] = useState<OpsChatMode>("langchain4j");
+  const [selectedModel, setSelectedModel] = useState("gemini-2.5-flash");
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<OpsMessage[]>([]);
   const chatAnchorRef = useRef<HTMLDivElement>(null);
@@ -145,6 +157,18 @@ export default function OpsPage() {
   const hasArchivedRef = useRef(false);
   // 用 ref 同步最新 streamingText，避免 useEffect 因 deps 变化多次触发归档
   const streamingTextRef = useRef("");
+
+  const isMcpMode = mode === "spring-ai-mcp";
+
+  // ── 动态拉取后端 Google GenAI API 支持的 Gemini 聊天模型列表 ─────────────
+  const { data: mcpModels } = useQuery({
+    queryKey: ["ops-mcp-models"],
+    queryFn: () => fetchWithAuth<string[]>("/api/v1/ops/mcp-models"),
+    enabled: isMcpMode,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const modelOptions = mcpModels && mcpModels.length > 0 ? mcpModels : ["gemini-2.5-flash"];
 
   const {
     streamingText,
@@ -155,7 +179,7 @@ export default function OpsPage() {
     send,
     clearTerminal,
     abort,
-  } = useOpsStream();
+  } = useOpsStream(mode, selectedModel);
 
   // ── 同步 streamingText 到 ref（供 useEffect 安全读取，不加入 deps）─────────
   useEffect(() => {
@@ -207,6 +231,12 @@ export default function OpsPage() {
     return () => abort();
   }, [abort]);
 
+  // ── 切换 Agent 引擎模式（中止进行中的流） ─────────────────────────────────
+  const handleModeChange = (nextMode: string) => {
+    abort();
+    setMode(nextMode as OpsChatMode);
+  };
+
   // ── 发送消息 ───────────────────────────────────────────────────────────────
   const handleSend = () => {
     const q = input.trim();
@@ -236,17 +266,32 @@ export default function OpsPage() {
 
   return (
     <div className="flex h-[calc(100vh-3.5rem-3rem)] flex-col gap-4">
-      {/* ── 页面标题栏 ──────────────────────────────────────────────── */}
-      <div className="flex shrink-0 items-center justify-between">
+      {/* ── 页面标题栏与模式切换 ──────────────────────────────────────── */}
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <h2 className="text-2xl font-bold">Ops Copilot</h2>
           <Badge variant="secondary" className="text-xs">
             AI 运维助手
           </Badge>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <ShieldAlert className="h-3.5 w-3.5" />
-          <span>仅管理员可用 · 命令在白名单内执行</span>
+
+        <div className="flex items-center gap-3">
+          {/* 对话引擎模式切换器 */}
+          <Tabs value={mode} onValueChange={handleModeChange}>
+            <TabsList className="h-8">
+              <TabsTrigger id="ops-mode-langchain4j" value="langchain4j" className="text-xs">
+                LangChain4j 模式
+              </TabsTrigger>
+              <TabsTrigger id="ops-mode-spring-ai-mcp" value="spring-ai-mcp" className="text-xs">
+                Spring AI + MCP 模式
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          <div className="hidden items-center gap-1.5 text-xs text-muted-foreground sm:flex">
+            <ShieldAlert className="h-3.5 w-3.5" />
+            <span>仅管理员可用 · 命令在白名单内执行</span>
+          </div>
         </div>
       </div>
 
@@ -255,10 +300,39 @@ export default function OpsPage() {
         {/* ━━ 左栏：AI 对话 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
         <div className="flex flex-col overflow-hidden rounded-lg border bg-card">
           {/* 左栏顶部 */}
-          <div className="flex shrink-0 items-center justify-between border-b px-4 py-2.5">
-            <div className="flex items-center gap-2">
+          <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b px-4 py-2.5">
+            <div className="flex flex-wrap items-center gap-2">
               <Bot className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium">AI 对话</span>
+              <Badge variant="outline" className="text-[10px]">
+                {isMcpMode ? "Spring AI + MCP" : "LangChain4j"}
+              </Badge>
+
+              {/* Spring AI + MCP 模式专属：动态 Gemini 模型选择下拉框 */}
+              {isMcpMode && (
+                <Select
+                  value={selectedModel}
+                  onValueChange={setSelectedModel}
+                  disabled={isStreaming}
+                >
+                  <SelectTrigger
+                    id="ops-mcp-model-select"
+                    size="sm"
+                    className="h-7 min-w-[210px] text-xs"
+                  >
+                    <SelectValue placeholder="选择 Gemini 模型" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {modelOptions.map((modelId) => (
+                      <SelectItem key={modelId} value={modelId} className="text-xs">
+                        {modelId === "gemini-2.5-flash"
+                          ? "gemini-2.5-flash（默认 · 主力均衡）"
+                          : modelId}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
             <Button
               id="ops-chat-clear"
@@ -280,7 +354,11 @@ export default function OpsPage() {
                 <div className="flex h-48 flex-col items-center justify-center gap-3 text-muted-foreground">
                   <Bot className="h-10 w-10 opacity-20" />
                   <p className="text-sm">发送运维指令，Agent 将自动执行并返回结果</p>
-                  <p className="text-xs opacity-60">例如：帮我查看 frontend 服务日志</p>
+                  <p className="text-xs opacity-60">
+                    {isMcpMode
+                      ? "例如：检查一下服务器状态 / 查看博客文章分类"
+                      : "例如：帮我查看 frontend 服务日志"}
+                  </p>
                 </div>
               )}
               {messages.map((msg, i) => (
@@ -319,7 +397,9 @@ export default function OpsPage() {
               </Button>
             </div>
             <p className="mt-1.5 text-xs text-muted-foreground">
-              基于白名单的 SSH 命令执行，结果实时推送到右侧终端
+              {isMcpMode
+                ? "基于 Spring AI ChatClient + MCP Client 回环调用 /mcp 工具，结果直接展示在对话区"
+                : "基于白名单的 SSH 命令执行，结果实时推送到右侧终端"}
             </p>
           </div>
         </div>
@@ -328,6 +408,7 @@ export default function OpsPage() {
         <TerminalPanel
           lines={terminalLines}
           status={status}
+          mode={mode}
           latestToolCall={latestToolCall}
           onClear={clearTerminal}
           className="min-h-0"

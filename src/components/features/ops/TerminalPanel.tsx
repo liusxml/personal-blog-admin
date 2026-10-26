@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Terminal, Trash2, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { OpsStreamStatus, OpsToolCall } from "@/types";
+import type { OpsChatMode } from "@/hooks/useOpsStream";
 
 // ─── ANSI 转义码剪除工具函数 ──────────────────────────────────────────────────
 
@@ -25,6 +26,8 @@ interface TerminalPanelProps {
   lines: string[];
   /** 当前 SSE 流状态（用于展示顶部状态指示器） */
   status: OpsStreamStatus;
+  /** 当前对话引擎模式（MCP 模式下工具结果直接由大模型总结在对话区） */
+  mode?: OpsChatMode;
   /** 最近一次工具调用（用于展示工具调用徽章） */
   latestToolCall?: OpsToolCall | null;
   /** 清空终端输出的回调 */
@@ -69,6 +72,7 @@ function StatusIndicator({ status }: { status: OpsStreamStatus }) {
 export function TerminalPanel({
   lines,
   status,
+  mode = "langchain4j",
   latestToolCall,
   onClear,
   className,
@@ -81,6 +85,7 @@ export function TerminalPanel({
   }, [lines]);
 
   const isEmpty = lines.length === 0;
+  const isMcpMode = mode === "spring-ai-mcp";
 
   return (
     <div
@@ -137,8 +142,14 @@ export function TerminalPanel({
       {/* ── 终端主体 ─────────────────────────────────────────────────── */}
       <ScrollArea className="min-h-0 flex-1">
         <div className="min-h-[200px] p-3">
-          {/* 空状态占位：只在真正待命（idle）且无日志时显示，防止与“完成”状态并存 */}
-          {isEmpty && status === "idle" ? (
+          {/* MCP 模式下，MCP 工具调用结果一次性返回给大模型并在左侧对话区结构化展示 */}
+          {isMcpMode && isEmpty ? (
+            <div className="flex h-40 flex-col items-center justify-center gap-2">
+              <Terminal className="h-8 w-8 text-zinc-700" />
+              <p className="text-xs text-zinc-500">MCP 模式工具结果展示在对话区</p>
+            </div>
+          ) : isEmpty && status === "idle" ? (
+            /* 空状态占位：只在真正待命（idle）且无日志时显示，防止与“完成”状态并存 */
             <div className="flex h-40 flex-col items-center justify-center gap-2">
               <Terminal className="h-8 w-8 text-zinc-700" />
               <p className="text-xs text-zinc-600">等待 Agent 执行 SSH 命令…</p>
