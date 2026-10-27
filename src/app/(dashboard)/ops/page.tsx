@@ -149,7 +149,7 @@ function StreamingBubble({ text }: { text: string }) {
 
 export default function OpsPage() {
   const [mode, setMode] = useState<OpsChatMode>("langchain4j");
-  const [selectedModel, setSelectedModel] = useState("gemini-2.5-flash");
+  const [selectedModel, setSelectedModel] = useState("gemini-flash-latest");
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<OpsMessage[]>([]);
   const chatAnchorRef = useRef<HTMLDivElement>(null);
@@ -168,7 +168,10 @@ export default function OpsPage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const modelOptions = mcpModels && mcpModels.length > 0 ? mcpModels : ["gemini-2.5-flash"];
+  const modelOptions =
+    mcpModels && mcpModels.length > 0
+      ? mcpModels
+      : ["gemini-flash-latest", "gemini-3-flash-preview", "gemini-3.5-flash", "gemini-3.8-flash"];
 
   const {
     streamingText,
@@ -325,8 +328,8 @@ export default function OpsPage() {
                   <SelectContent>
                     {modelOptions.map((modelId) => (
                       <SelectItem key={modelId} value={modelId} className="text-xs">
-                        {modelId === "gemini-2.5-flash"
-                          ? "gemini-2.5-flash（默认 · 主力均衡）"
+                        {modelId === "gemini-flash-latest"
+                          ? "gemini-flash-latest（默认 · 主力均衡）"
                           : modelId}
                       </SelectItem>
                     ))}

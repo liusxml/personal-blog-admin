@@ -56,23 +56,20 @@ function parseSseChunk(chunk: string, onEvent: (type: string, data: string) => v
     if (!event.trim()) continue;
 
     let type = "message";
-    let data: string | undefined = undefined; // 用 undefined 区分「未设置」和「空字符串」
+    const dataLines: string[] = [];
 
     for (const line of event.split("\n")) {
       if (line.startsWith("event:")) {
         type = line.slice("event:".length).trim();
       } else if (line.startsWith("data:")) {
-        // SSE 规范：data: 后紧跟一个可选空格，再跟内容。
-        // 后端 LangChain4j 推送格式为 `data:<token>`（无额外空格），
-        // 其中 token 本身可能以空格开头（如 " world"）或就是一个空格（" "）。
-        // 因此必须一律保留 data: 之后的所有字符，不做任何 trim。
-        data = line.slice("data:".length);
+        // SSE 规范：单个事件若包含换行符，服务端 SseEmitter 会拆分为多行 `data:`，
+        // 客户端需按规范将同一事件内的多行 `data:` 以 `\n` 拼接还原完整文本。
+        dataLines.push(line.slice("data:".length));
       }
     }
 
-    // 用 undefined 判断，确保纯空格 token（如 " "）不被 falsy 检查过滤
-    if (data !== undefined) {
-      onEvent(type, data);
+    if (dataLines.length > 0) {
+      onEvent(type, dataLines.join("\n"));
     }
   }
 }
@@ -103,7 +100,7 @@ function parseSseChunk(chunk: string, onEvent: (type: string, data: string) => v
  */
 export function useOpsStream(
   mode: OpsChatMode = "langchain4j",
-  model = "gemini-2.5-flash"
+  model = "gemini-flash-latest"
 ): UseOpsStreamReturn {
   const [streamingText, setStreamingText] = useState("");
   const [terminalLines, setTerminalLines] = useState<string[]>([]);
